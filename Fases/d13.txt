@@ -1,0 +1,19 @@
+6 6
+F2 F1 F1 F1 F3 00
+F1 F0 F1 F0 F4 F3
+F1 F0 F0 F0 F0 F1
+F1 F1 F0 F1 F1 F1
+F1 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F5
+1 2
+4
+LI 3 1
+LÚ 1 1
+LN 4 2
+LA 2 2
+4
+I 1 4
+Ú 2 4
+N 3 4
+A 4 4
+Namorada do rubS

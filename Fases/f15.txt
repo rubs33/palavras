@@ -1,0 +1,26 @@
+7 7
+F2 F1 F1 F1 F1 F1 F3
+F1 F0 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F1 F5
+3 1
+9
+LL 1 5
+LA 1 2
+LÁ 1 1
+LÂ 2 1
+LÃ 2 2
+LP 3 5
+LI 4 2
+LÍ 4 1
+LS 5 5
+5
+L 1 5
+Á 2 5
+P 3 5
+I 4 5
+S 5 5
+Dica: objeto que serve para escrever.

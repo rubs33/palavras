@@ -1,0 +1,21 @@
+6 6
+F2 F1 F1 F1 F1 F3
+F1 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F5
+2 1
+5
+LG 1 1
+LA 2 3
+LÔ 2 2
+LT 4 1
+LO 3 3
+4
+G 1 4
+A 2 4
+T 3 4
+O 4 4
+Dica: Animal que mia.
+(Não precisa utilizar todas as letras).

@@ -1,0 +1,29 @@
+6 9
+F2 F1 F1 F1 F1 F3
+F1 F0 F0 F0 F0 F1
+F1 F0 F1 F0 F1 F1
+F1 F0 F0 F0 F0 F1
+F1 F1 F1 F0 F1 F1
+F1 F0 F0 F0 F0 F1
+F1 F1 F1 F0 F1 F1
+F1 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F5
+2 1
+8
+LP 1 7
+LI 1 5
+LN 4 5
+LG 4 7
+LÜ 4 1
+LU 1 1
+LI 2 5
+LM 2 7
+7
+P 3 1
+I 3 2
+N 3 3
+G 3 4
+Ü 3 5
+I 3 6
+M 3 7
+Dica: Animal que vive no pólo Sul.

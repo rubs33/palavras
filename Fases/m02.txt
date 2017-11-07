@@ -1,0 +1,33 @@
+10 7
+F2 F1 F1 F1 F1 F1 F1 F3 00 00
+F1 F0 F4 F5 F0 F1 F0 F1 00 00
+F1 F0 F0 F0 F0 F1 F0 F4 F1 F3
+F1 F0 F1 F0 F0 F0 F0 F0 F0 F1
+F1 F0 F4 F1 F0 F1 F1 F1 F0 F1
+F1 F0 F0 F0 F0 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F1 F1 F1 F1 F5
+2 2
+10
+LJ 4 1
+LA 4 3
+LN 7 5
+LT 8 5
+LA 5 3
+LL 3 3
+LM 3 5
+LO 6 3
+LÇ 6 1
+LO 1 5
+10
+J 1 1
+A 1 2
+N 1 3
+T 1 4
+A 1 5
+L 2 5
+M 3 5
+O 4 5
+Ç 5 5
+O 6 5
+Vertical: refeição feita durante a noite.
+Horizontal: refeição feita durante o dia.

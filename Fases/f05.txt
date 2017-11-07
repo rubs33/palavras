@@ -1,0 +1,28 @@
+6 9
+F2 F1 F1 F1 F1 F3
+F1 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F1
+F1 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F5
+3 3
+10
+LL 2 1
+LH 3 1
+LO 1 6
+LO 1 7
+LÓ 2 6
+LÓ 2 7
+LÔ 3 6
+LÔ 3 7
+LÕ 4 6
+LÕ 4 7
+4
+O 1 1
+L 2 1
+H 3 1
+O 4 1
+Complete com a letra correta.

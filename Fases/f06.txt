@@ -1,0 +1,19 @@
+5 7
+F2 F1 F1 F1 F3
+F1 F0 F0 F0 F1
+F1 F0 F0 F0 F1
+F1 F0 F0 F0 F1
+F1 F0 F0 F0 F1
+F1 F0 F0 F0 F1
+F4 F1 F1 F1 F5
+3 3
+4
+LA 1 1
+LA 3 1
+LS 1 5
+LZ 3 5
+3
+A 1 1
+S 2 1
+A 3 1
+Complete com a letra correta.

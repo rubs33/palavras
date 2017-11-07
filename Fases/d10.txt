@@ -1,0 +1,41 @@
+9 7
+F2 F1 F1 F1 F1 F1 F1 F1 F3
+F1 F0 F0 F0 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F0 F1 F1 F1 F5
+00 00 F1 F0 F0 F0 F1 00 00
+F2 F1 F1 F1 F0 F1 F1 F1 F3
+F1 F0 F0 F0 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F1 F1 F1 F5
+4 3
+14
+LL 6 1 
+LA 1 5
+LR 1 1
+LA 2 5
+LN 4 1
+LJ 3 1
+LA 3 5
+LR 7 5
+LE 5 5
+LT 2 1
+LR 7 1
+LA 4 5
+LT 5 1
+LO 6 5
+14
+L 1 1
+A 2 1
+R 3 1
+A 4 1
+N 5 1
+J 6 1
+A 7 1
+R 1 5
+E 2 5
+T 3 5
+R 4 5
+A 5 5
+T 6 5
+O 7 5
+Dica 1: fruta com nome de uma cor.
+Dica 2: sinônimo de fotografia.

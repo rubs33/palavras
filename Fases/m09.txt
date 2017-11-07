@@ -1,0 +1,17 @@
+7 4
+00 F2 F1 F1 F3 00 00
+F2 F1 F0 F0 F4 F1 F3
+F1 F0 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F1 F5
+1 2
+4
+LZ 5 2
+LE 3 1
+LR 2 2
+LO 2 1
+4
+Z 1 2
+E 2 2
+R 3 2
+O 4 2
+Dica: número de valor nulo.

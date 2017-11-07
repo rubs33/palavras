@@ -1,0 +1,23 @@
+4 8
+F2 F1 F1 F3
+F1 F0 F0 F1
+F1 F0 F0 F1
+F1 F0 F0 F1
+F1 F0 F0 F1
+F1 F0 F0 F1
+F1 F0 F2 F5
+F4 F1 F5 00
+1 1
+5
+LD 1 6
+LE 1 2
+LN 1 4
+LT 1 5
+LE 1 3
+5
+D 2 1
+E 2 2
+N 2 3
+T 2 4
+E 2 5
+Dica: tem na boca.

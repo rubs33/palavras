@@ -1,0 +1,33 @@
+10 8
+00 F2 F1 F3 00 F2 F1 F1 F3 00
+00 F1 F0 F1 00 F1 F0 F0 F4 F3
+00 F1 F0 F1 00 F1 F0 F0 F0 F1
+F2 F5 F0 F4 F1 F5 F0 F0 F2 F5
+F1 F0 F0 F0 F0 F0 F0 F0 F1 00
+F4 F3 F0 F2 F1 F3 F0 F0 F1 00
+00 F1 F0 F1 00 F4 F1 F1 F5 00
+00 F4 F1 F5 00 00 00 00 00 00
+8 2
+10
+LB 7 5
+LA 6 5
+LN 7 1
+LA 6 4
+LN 6 2
+LA 6 3
+LM 6 1
+LÇ 7 3
+LÃ 7 4
+LS 5 4
+9
+B 2 1
+A 2 2
+N 2 3
+A 2 4
+N 2 5
+A 2 6
+M 1 4
+Ç 3 4
+Ã 4 4
+Horizontal: uma fruta vermelha.
+Vertical: uma fruta que os macacos gostam.

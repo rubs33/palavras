@@ -1,0 +1,22 @@
+8 5
+F2 F1 F1 F1 F1 F1 F1 F3
+F1 F0 F0 F0 F1 F0 F0 F1
+F1 F1 F0 F1 F1 F0 F1 F1
+F1 F0 F0 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F1 F1 F5
+3 3
+6
+LV 6 1
+LI 5 1
+LO 1 1
+LL 3 1
+LÃ 2 1
+LO 5 2
+6
+V 1 3
+I 2 3
+O 3 3
+L 4 3
+Ã 5 3
+O 6 3
+Dica: instrumento musical com cordas.

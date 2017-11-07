@@ -1,0 +1,26 @@
+10 5
+F2 F1 F1 F1 F1 F1 F1 F1 F1 F3
+F1 F0 F0 F0 F0 F1 F0 F0 F0 F1
+F1 F1 F0 F1 F1 F1 F1 F0 F1 F1
+F1 F0 F0 F0 F0 F0 F0 F0 F0 F1
+F4 F1 F1 F1 F1 F1 F1 F1 F1 F5
+4 3
+8
+LQ 6 1
+LU 7 1
+LA 8 1
+LD 7 2
+LR 1 1
+LA 2 1
+LD 2 2
+LO 3 1
+8
+Q 1 3
+U 2 3
+A 3 3
+D 4 3
+R 5 3
+A 6 3
+D 7 3
+O 8 3
+Dica: forma que possui quatro lados.

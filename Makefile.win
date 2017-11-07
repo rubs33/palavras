@@ -1,0 +1,33 @@
+# Project: Palavras
+# Makefile created by Dev-C++ 4.9.9.2
+
+CPP  = g++.exe
+CC   = gcc.exe
+WINDRES = windres.exe
+RES  = Palavras_private.res
+OBJ  = principal.o $(RES)
+LINKOBJ  = principal.o $(RES)
+LIBS =  -mwindows -lalleg  
+INCS = 
+CXXINCS = 
+BIN  = Palavras.exe
+CXXFLAGS = $(CXXINCS) -D WINDOWS   -Wall -O3 -s -O3
+CFLAGS = $(INCS) -D WINDOWS   -Wall -O3 -s -O3
+RM = rm -f
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before Palavras.exe all-after
+
+
+clean: clean-custom
+	${RM} $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(CPP) $(LINKOBJ) -o "Palavras.exe" $(LIBS)
+
+principal.o: principal.cpp
+	$(CPP) -c principal.cpp -o principal.o $(CXXFLAGS)
+
+Palavras_private.res: Palavras_private.rc 
+	$(WINDRES) -i Palavras_private.rc --input-format=rc -o Palavras_private.res -O coff 
