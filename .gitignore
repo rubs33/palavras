@@ -26,7 +26,11 @@
 *.a
 *.lib
 
+# Data
+Fases.dat
+
 # Executables
 *.exe
 *.out
 *.app
+palavras
