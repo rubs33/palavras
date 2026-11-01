@@ -116,6 +116,7 @@ Jogo::Jogo() {
         set_color_depth(16);
     }
 
+/*
     // Tenta resolução 640 x 480 px (tela cheia)
     if (set_gfx_mode(GFX_AUTODETECT_FULLSCREEN, // WINDOWED, //
                      SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0) == 0) {
@@ -143,7 +144,7 @@ Jogo::Jogo() {
         }
     }
     #endif
-
+*/
     // Tenta modo janela
     if (!comVideo) {
         if (set_gfx_mode(GFX_AUTODETECT_WINDOWED,
