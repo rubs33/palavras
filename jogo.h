@@ -442,7 +442,7 @@ inline void Jogo::tocar_musica(int musica) {
 
 
 //
-//     Apresentação inicial
+//     ApresentaÃ§Ã£o inicial (Refatorada)
 //
 void Jogo::apresentacao() {
     clear_keybuf();
@@ -450,8 +450,7 @@ void Jogo::apresentacao() {
     game_speed = 0;
     while (i < 0) {
 
-        // Desenhar Apresentação
-        acquire_screen();
+        // Desenha diretamente no buffer de memÃ³ria (sem travamentos de tela)
         desenhar_fundo_animado();
         blit((BITMAP *)imgs[Titulo].dat, buffer, 0, 0,
              (SCREEN_WIDTH - 360) / 2, i, 360, 144);
@@ -460,8 +459,9 @@ void Jogo::apresentacao() {
         masked_blit((BITMAP *)imgs[Creditos].dat, buffer, 0, 0,
              (SCREEN_WIDTH - 179) - i,
              (SCREEN_HEIGHT - 50) - (i / 2), 215, 50);
+             
+        // Transfere o buffer pronto para a tela fÃ­sica de uma vez sÃ³
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        release_screen();
 
         while (game_speed > 0) {
             i += 2;
@@ -494,7 +494,7 @@ void Jogo::apresentacao() {
             game_speed--;
         } // while
 
-    } // for
+    } // while
 }
 
 
@@ -531,7 +531,6 @@ void Jogo::exibe_menu() {
         }
         
         // Desenhar Menu
-        acquire_screen();
         desenhar_fundo_animado();
         desenhar_titulo();
         desenhar_baloes(baloes);
@@ -539,7 +538,6 @@ void Jogo::exibe_menu() {
         desenhar_creditos();
         masked_blit((BITMAP *)imgs[DicaMenu].dat, buffer, 0, 0, x, y, 360, 168);
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        release_screen();
         
         while (game_speed > 0) {
         
@@ -605,7 +603,6 @@ void Jogo::apresentacao_fase(Fase &fase) {
     while (personagem.Y < fase.personagemY) {
     
         // Desenhar jogo
-        acquire_screen();
         desenhar_fundo_animado();
         desenhar_fase();
         
@@ -627,7 +624,6 @@ void Jogo::apresentacao_fase(Fase &fase) {
         
         desenhar_personagem();
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        release_screen();
         
         while (game_speed > 0) {
             personagem.Y += vel;
@@ -707,7 +703,6 @@ void Jogo::iniciar() {
     while (!sair && !acabou) {
     
         // Desenhar jogo
-        acquire_screen();
         desenhar_fundo_animado();
         desenhar_fase();
         desenhar_topo(tempoJogo, true);
@@ -738,7 +733,6 @@ void Jogo::iniciar() {
         }
 
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        release_screen();
     
         while ((game_speed > 0)) {
             tempoOcioso = wlclock() - inicioOcioso;
@@ -983,13 +977,11 @@ void Jogo::iniciar() {
         personagem.acao = VITORIA;
         int t = wlclock();
         while (! passou(t, 1700)) {
-            acquire_screen();
             desenhar_fundo_animado();
             desenhar_fase();
             desenhar_topo(tempoJogo, false);
             desenhar_personagem();
             blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-            release_screen();
             if (keypressed()) {
                 break;
             }
@@ -1004,7 +996,6 @@ void Jogo::iniciar() {
             tempoOcioso = wlclock() - inicioOcioso;
 
             // Desenha Parabéns
-            acquire_screen();
             desenhar_fundo_animado();
             desenhar_topo(tempoJogo, false);
             masked_blit((BITMAP *)imgs[Parabens].dat, buffer, 0, 0,
@@ -1018,7 +1009,6 @@ void Jogo::iniciar() {
                  ((SCREEN_WIDTH - 342) / 2) + 70 , 
                  200 + 125, cor, 0);
             blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-            release_screen();
 
             if (keypressed()) {
 
@@ -1066,14 +1056,12 @@ void Jogo::mudar_fase() {
     while (!selecionou) {
 
         // Desenhar
-        acquire_screen();
         desenhar_fundo_animado();
         desenhar_titulo();
         desenhar_baloes(baloes);
         desenhar_menufases(faseinicio);
         desenhar_creditos();
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        release_screen();
 
         while (game_speed > 0) {
 
@@ -1192,7 +1180,6 @@ void Jogo::instrucoes() {
     while (exibindo) {
     
         // Desenhar
-        acquire_screen();
         desenhar_fundo_animado();
         desenhar_titulo();
         desenhar_baloes(baloes);
@@ -1200,7 +1187,6 @@ void Jogo::instrucoes() {
              (SCREEN_WIDTH - 339) / 2, 150, 339, 266);
         desenhar_creditos();
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        release_screen();
         
         // Tratar Teclado
         while (game_speed > 0) {
@@ -1239,12 +1225,10 @@ void Jogo::creditos() {
     while (i <= 716 + SCREEN_HEIGHT) {
 
         // Desenhar Créditos
-        acquire_screen();
         desenhar_fundo_animado();
         masked_blit((BITMAP *)imgs[Final].dat, buffer, 0, 0,
              (SCREEN_WIDTH - 316) / 2, auxy, 316, 716);
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        release_screen();
 
         // Tratar Teclado
         while (game_speed > 0) {
@@ -1318,7 +1302,6 @@ void Jogo::final() {
         }
             
         // Desenhar
-        acquire_screen();
         desenhar_fundo_animado();
         masked_blit((BITMAP *)imgs[Fim].dat, buffer, 0, 0,
              (SCREEN_WIDTH - 223) / 2, 200, 223, 98);
@@ -1347,7 +1330,6 @@ void Jogo::final() {
         desenhar_personagem();
 
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        release_screen();
 
         // Tratar Teclado
         while (game_speed > 0) {
@@ -1399,14 +1381,12 @@ void Jogo::opcoes() {
     while (!menuopcoes.get_sair()) {
     
         // Desenhar
-        acquire_screen();
         desenhar_fundo_animado();
         desenhar_titulo();
         desenhar_baloes(baloes);
         menuopcoes.desenhar(imgs, buffer, comSom, volSample, volMidi, velPasso);
         desenhar_creditos();
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        release_screen();
         
         // Tratar Teclado
         while (game_speed > 0) {
