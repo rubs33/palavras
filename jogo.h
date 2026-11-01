@@ -463,6 +463,11 @@ void Jogo::apresentacao() {
         // Transfere o buffer pronto para a tela física de uma vez só
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
+        // Se o timer ainda não gerou ticks, descansa a CPU por 1ms em vez de fazer busy-waiting
+        while (game_speed == 0) {
+            rest(1);
+        }
+
         while (game_speed > 0) {
             i += 2;
 
@@ -499,7 +504,7 @@ void Jogo::apresentacao() {
 
 
 //
-//     Imprime o menu enquanto nn�o seleciona uma op��o
+//     Imprime o menu enquanto não seleciona uma opção (Refatorada)
 //
 void Jogo::exibe_menu() {
     bool exibindoDica = false;
@@ -510,7 +515,7 @@ void Jogo::exibe_menu() {
     inicioOcioso = wlclock();
     game_speed   = 0;
     
-    // Enquanto n�o selecionou uma op��o
+    // Enquanto não selecionou uma opção
     while (!menu.definido()) {
         tempoOcioso = wlclock() - inicioOcioso;
         if (tempoOcioso >= OCIOSO) {
@@ -530,7 +535,7 @@ void Jogo::exibe_menu() {
             }
         }
         
-        // Desenhar Menu
+        // Desenhar Menu (sem acquire_screen/release_screen)
         desenhar_fundo_animado();
         desenhar_titulo();
         desenhar_baloes(baloes);
@@ -538,6 +543,11 @@ void Jogo::exibe_menu() {
         desenhar_creditos();
         masked_blit((BITMAP *)imgs[DicaMenu].dat, buffer, 0, 0, x, y, 360, 168);
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        
+        // Se o timer ainda não gerou ticks, descansa a CPU por 1ms em vez de fazer busy-waiting
+        while (game_speed == 0) {
+            rest(1);
+        }
         
         while (game_speed > 0) {
         
@@ -577,8 +587,8 @@ void Jogo::exibe_menu() {
             }
             
             game_speed--;
-        } // while
-    } // while
+        } // while game_speed
+    } // while menu.definido
 
     operacao = menu.get_opcao();
 }
@@ -625,6 +635,11 @@ void Jogo::apresentacao_fase(Fase &fase) {
         desenhar_personagem();
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         
+        // Se o timer ainda não gerou ticks, descansa a CPU por 1ms em vez de fazer busy-waiting
+        while (game_speed == 0) {
+            rest(1);
+        }
+
         while (game_speed > 0) {
             personagem.Y += vel;
             i++;
@@ -734,6 +749,11 @@ void Jogo::iniciar() {
 
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     
+        // Se o timer ainda não gerou ticks, descansa a CPU por 1ms em vez de fazer busy-waiting
+        while (game_speed == 0) {
+            rest(1);
+        }
+
         while ((game_speed > 0)) {
             tempoOcioso = wlclock() - inicioOcioso;
 
@@ -1063,6 +1083,11 @@ void Jogo::mudar_fase() {
         desenhar_creditos();
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
+        // Se o timer ainda não gerou ticks, descansa a CPU por 1ms em vez de fazer busy-waiting
+        while (game_speed == 0) {
+            rest(1);
+        }
+
         while (game_speed > 0) {
 
             // Tratar Teclado            
@@ -1188,6 +1213,11 @@ void Jogo::instrucoes() {
         desenhar_creditos();
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         
+        // Se o timer ainda não gerou ticks, descansa a CPU por 1ms em vez de fazer busy-waiting
+        while (game_speed == 0) {
+            rest(1);
+        }
+
         // Tratar Teclado
         while (game_speed > 0) {
             if (keypressed()) {
@@ -1229,6 +1259,11 @@ void Jogo::creditos() {
         masked_blit((BITMAP *)imgs[Final].dat, buffer, 0, 0,
              (SCREEN_WIDTH - 316) / 2, auxy, 316, 716);
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+        // Se o timer ainda não gerou ticks, descansa a CPU por 1ms em vez de fazer busy-waiting
+        while (game_speed == 0) {
+            rest(1);
+        }
 
         // Tratar Teclado
         while (game_speed > 0) {
@@ -1331,6 +1366,11 @@ void Jogo::final() {
 
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
+        // Se o timer ainda não gerou ticks, descansa a CPU por 1ms em vez de fazer busy-waiting
+        while (game_speed == 0) {
+            rest(1);
+        }
+
         // Tratar Teclado
         while (game_speed > 0) {
             i += 2;
@@ -1388,6 +1428,11 @@ void Jogo::opcoes() {
         desenhar_creditos();
         blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         
+        // Se o timer ainda não gerou ticks, descansa a CPU por 1ms em vez de fazer busy-waiting
+        while (game_speed == 0) {
+            rest(1);
+        }
+
         // Tratar Teclado
         while (game_speed > 0) {
             if (keypressed()) {
