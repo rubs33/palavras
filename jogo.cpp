@@ -3,15 +3,19 @@
  * Descricao: Classe de controle do jogo.
  */
 #include <allegro.h>
+#include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
+#include <string>
 #include "jogo.h"
 #include "tipos.h"
 #include "constantes.h"
 #include "funcoes.h"
 
 using namespace std;
+namespace fs = std::filesystem;
 
 volatile unsigned int game_speed = 0,   // Controle de velocidade do jogo
     bg_speed = 0,                       // Controle de velocidade do fundo
@@ -343,14 +347,21 @@ bool Jogo::carregar_fases() {
  * Le arquivo tipado de fases habilitadas
  */
 bool Jogo::carregar_habilitadas() {
-    //TODO obter de $HOME (por usuario)
-    ifstream arquivoLeitura("dados/Fases.dat", ios::binary);
-    if (arquivoLeitura.good()) {
-        arquivoLeitura.read(reinterpret_cast<char *>(&habilitadas),
-             sizeof(habilitadas));
+    const char* homeDir = std::getenv("HOME");
+    if (!homeDir) {
+        // Fallback caso HOME não esteja definida
+        homeDir = ".";
+    }
+
+    fs::path caminhoArquivo = fs::path(homeDir) / ".local" / "share" / "palavras" / "Fases.dat";
+
+    std::ifstream arquivoLeitura(caminhoArquivo, std::ios::binary);
+    if (arquivoLeitura.is_open() && arquivoLeitura.good()) {
+        arquivoLeitura.read(reinterpret_cast<char *>(&habilitadas), sizeof(habilitadas));
         arquivoLeitura.close();
         return true;
     }
+
     habilitadas.nivel[0] = 1;
     habilitadas.nivel[1] = 1;
     habilitadas.nivel[2] = 1;
@@ -361,14 +372,25 @@ bool Jogo::carregar_habilitadas() {
  * Salva fases habilitadas em arquivo tipado
  */
 bool Jogo::salvar_habilitadas() {
-    //TODO salvar em $HOME (por usuario)
-    ofstream arquivoEscrita("dados/Fases.dat", ios::binary);
-    if (arquivoEscrita.good()) {
-        arquivoEscrita.write(reinterpret_cast<char *>(&habilitadas),
-             sizeof(habilitadas));
+    const char* homeDir = std::getenv("HOME");
+    if (!homeDir) {
+        homeDir = ".";
+    }
+
+    fs::path caminhoArquivo = fs::path(homeDir) / ".local" / "share" / "palavras" / "Fases.dat";
+    fs::path diretorioDestino = caminhoArquivo.parent_path();
+
+    if (!fs::exists(diretorioDestino)) {
+        fs::create_directories(diretorioDestino);
+    }
+
+    std::ofstream arquivoEscrita(caminhoArquivo, std::ios::binary);
+    if (arquivoEscrita.is_open() && arquivoEscrita.good()) {
+        arquivoEscrita.write(reinterpret_cast<const char *>(&habilitadas), sizeof(habilitadas));
         arquivoEscrita.close();
         return true;
     }
+
     return false;
 }
 
