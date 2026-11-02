@@ -1326,8 +1326,10 @@ void Jogo::final() {
     personagem.acao    = ANDANDO;
     personagem.sentido = 'R';
     personagem.X       = -TILE_SIZE;
-    personagem.Y       = 400;
+    personagem.Y       = 400 - (400 % TILE_SIZE);
     personagem.passo   = TILE_SIZE;
+
+    clear_keybuf();
 
     bool sair     = false,  // Sair do final
          terminou = false;  // Flag indicando que o personagem ja chegou no destino
@@ -1386,14 +1388,14 @@ void Jogo::final() {
         aguardar();
 
         // Tratar Teclado
-        while (game_speed > 0) {
+        if (!terminou) {
+            while (game_speed > 0) {
 
-            // Exibir animacao
-            if (!terminou) {
+                // Exibir animacao
                 personagem.X += 2;
 
                 // Ajustar passo do personagem
-                if (personagem.X > SCREEN_WIDTH - (2 * TILE_SIZE)) {
+                if (personagem.X > SCREEN_WIDTH - (4 * TILE_SIZE)) {
                     personagem.acao    = VITORIA;
                     personagem.sentido = 'D';
                     terminou = true;
@@ -1418,88 +1420,139 @@ void Jogo::final() {
                         break;
                     }
                 }
+                game_speed--;
+            }
 
-            // Se terminou a animcacao, o personagem pode andar livremente
-            } else {
-                if (keypressed()) {
-                    switch (readkey() >> 8) {
+        // Se terminou a animcacao, o personagem pode andar livremente
+        } else {
+            while (game_speed > 0) {
 
-                    // Subir
-                    case KEY_UP:
-                    case KEY_W:
-                        personagem.acao = ANDANDO;
-                        if (personagem.sentido == 'U') {
-                            personagem.Y -= 2;
-                        } else {
-                            personagem.sentido = 'U';
-                        }
-                        break;
+                // Se o personagem esta parado
+                if (personagem.acao != ANDANDO) {
+                    personagem.passo = TILE_SIZE;
 
-                    // Descer
-                    case KEY_DOWN:
-                    case KEY_S:
-                        personagem.acao = ANDANDO;
-                        if (personagem.sentido == 'D') {
-                            personagem.Y += 2;
-                        } else {
-                            personagem.sentido = 'D';
-                        }
-                        break;
+                    // posBloco indica a coordenada a frente do personagem
+                    unsigned char posBlocoY = YtoBlocoY(personagem.Y, fase),
+                        posBlocoX = XtoBlocoX(personagem.X, fase);
 
-                    // Esquerda
-                    case KEY_LEFT:
-                    case KEY_A:
-                        personagem.acao = ANDANDO;
-                        if (personagem.sentido == 'L') {
-                            personagem.X -= 2;
-                        } else {
-                            personagem.sentido = 'L';
-                        }
-                        break;
-
-                    // Direita
-                    case KEY_RIGHT:
-                    case KEY_D:
-                        personagem.acao = ANDANDO;
-                        if (personagem.sentido == 'R') {
-                            personagem.X += 2;
-                        } else {
-                            personagem.sentido = 'R';
-                        }
-                        break;
-
-                    // Alterna entre janela e tela cheia
-                    case KEY_F1:
-                        alternar_tela();
-                        break;
-
-                    // Volta pro menu inicial
-                    case KEY_ENTER:
-                    case KEY_ESC:
-                        sair = true;
-                        break;
-
-                    // Personagem faz "vitoria"
-                    case KEY_V:
-                        personagem.acao = VITORIA;
-                        break;
+                    switch (personagem.sentido) {
+                    case 'U': posBlocoY -= 1; break;
+                    case 'D': posBlocoY += 1; break;
+                    case 'L': posBlocoX -= 1; break;
+                    case 'R': posBlocoX += 1; break;
                     }
+
+                    if (keypressed()) {
+                        inicioOcioso = clock_speed;
+
+                        switch (readkey() >> 8) {
+
+                        // Subir
+                        case KEY_UP:
+                        case KEY_W:
+                            personagem.acao = ANDANDO;
+                            if (personagem.sentido == 'U') {
+                                personagem.Y -= velPasso;
+                            }
+                            personagem.sentido = 'U';
+                            break;
+
+                        // Descer
+                        case KEY_DOWN:
+                        case KEY_S:
+                            personagem.acao = ANDANDO;
+                            if (personagem.sentido == 'D') {
+                                personagem.Y += velPasso;
+                            }
+                            personagem.sentido = 'D';
+                            break;
+
+                        // Esquerda
+                        case KEY_LEFT:
+                        case KEY_A:
+                            personagem.acao = ANDANDO;
+                            if (personagem.sentido == 'L') {
+                                personagem.X -= velPasso;
+                            }
+                            personagem.sentido = 'L';
+                            break;
+
+                        // Direita
+                        case KEY_RIGHT:
+                        case KEY_D:
+                            personagem.acao = ANDANDO;
+                            if (personagem.sentido == 'R') {
+                                personagem.X += velPasso;
+                            }
+                            personagem.sentido = 'R';
+                            break;
+
+                        // Alterna entre janela e tela cheia
+                        case KEY_F1:
+                            alternar_tela();
+                            break;
+
+                        // Apara as instrucoes ou volta pro menu inicial
+                        case KEY_ESC:
+                            operacao = -1;
+                            sair     = true;
+                            break;
+
+                        // Personagem faz "vitoria" (ester egg)
+                        case KEY_V:
+                            personagem.acao = VITORIA;
+                            break;
+                        }
+
+                        clear_keybuf();
+
+                    // Se nao pressionou nenhuma tecla
+                    } else {
+
+                        // Se ficou muito tempo parado
+                        if (passou(inicioOcioso, OCIOSO)) {
+                            personagem.acao = DORMINDO;
+                        }
+                    }
+
+                // Se o personagem nao esta parado
+                } else {
                     clear_keybuf();
 
-                    personagem.passo -= 1;
-                    if (personagem.passo <= 0) {
+                    // Se nao esta em posicao discreta, continuar andando
+                    if ((personagem.sentido == 'U') &&
+                        (personagem.Y % TILE_SIZE)
+                    ) {
+                        personagem.Y     -= velPasso;
+                        personagem.passo -= velPasso;
+                    } else if ((personagem.sentido == 'L') &&
+                        (personagem.X % TILE_SIZE)
+                    ) {
+                        personagem.X     -= velPasso;
+                        personagem.passo -= velPasso;
+                    } else if ((personagem.sentido == 'R') &&
+                        (personagem.X % TILE_SIZE)
+                    ) {
+                        personagem.X     += velPasso;
+                        personagem.passo -= velPasso;
+                    } else if (personagem.Y % TILE_SIZE) {
+                        personagem.Y     += velPasso;
+                        personagem.passo -= velPasso;
+
+                    // Se esta em posicao discreta, entao parar
+                    } else {
+                        personagem.acao = PARADO;
+                        inicioOcioso    = clock_speed;
+                    }
+                    if (personagem.passo <= (int)velPasso) {
                         personagem.passo = TILE_SIZE;
                         tocar(Passo);
                     }
-                } else {
-                    clear_keybuf();
-                    if (personagem.acao != VITORIA) {
-                        personagem.acao = PARADO;
-                    }
                 }
+
+                game_speed--;
             }
-            game_speed--;
-        } // while
+        } // if
     } // while
 }
 
@@ -1871,7 +1924,7 @@ void Jogo::desenhar_baloes(vector<Objeto> &baloes) {
 void Jogo::desenhar_letra_final(BITMAP *letra, BITMAP *buffer, int pos, int i, bool terminou) {
     if (terminou || i > ((SCREEN_WIDTH - 20 * TILE_SIZE) / 2) + (pos * TILE_SIZE)) {
         masked_blit(letra, buffer, 0, 0, ((SCREEN_WIDTH - 20 * TILE_SIZE) / 2) + (pos * TILE_SIZE),
-            400, TILE_SIZE, TILE_SIZE);
+            400 - (400 % TILE_SIZE), TILE_SIZE, TILE_SIZE);
     }
 }
 
