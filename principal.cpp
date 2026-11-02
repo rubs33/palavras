@@ -1,16 +1,14 @@
 //
 //  Construindo Palavras
-//  Descrição: Código Principal.
+//  Descricao: Codigo Principal.
 //  Plataformas: Windows e Linux
-//  Versão: 1.1.0.5
-//  Data de Criação: 05/03/2005
-//  Última Modificação: 27/10/2005
-//  Autores: Otávio Nery Cipriani  &&  Rubens Takiguti Ribeiro
+//  Versao: 1.2.0.0
+//  Data de Criacao: 05/03/2005
+//  Ultima Modificacao: 01/11/2026
+//  Autores: Otavio Nery Cipriani  &&  Rubens Takiguti Ribeiro
 //
-//#define WINDOWS          // descomentar para compilar em windows
-#include <allegro.h>
+#include "principal.h"
 #include "constantes.h"
-#include "funcoes.h"
 #include "jogo.h"
 using namespace std;
 

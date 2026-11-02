@@ -7,7 +7,6 @@
 #define TIPOS_H
 
 #include <vector>
-using namespace std;
 
 //
 //     OBJETO: Coordenada, Conteúdo (letra) e Imagem
@@ -46,9 +45,9 @@ struct Fase {
     int X, Y,                      // coordenadas do ponto inicial da fase
         personagemX, personagemY,  // coordenadas iniciais do personagem
         num, nivel;                // fase e nível
-    vector< vector<unsigned char> > piso;
-    vector< vector<bool> > passavel;
-    vector<Objeto> objetos, destinos;
+    std::vector< std::vector<unsigned char> > piso;
+    std::vector< std::vector<bool> > passavel;
+    std::vector<Objeto> objetos, destinos;
 };
 
 
