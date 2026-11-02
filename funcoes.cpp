@@ -1,8 +1,7 @@
-//
-//  Construindo Palavras
-//  Descricao: Funcoes gerais.
-//  Versao: 1.2.0.0
-//
+/**
+ * Construindo Palavras
+ * Descricao: Funcoes gerais.
+ */
 #include <allegro.h>
 #include <fstream>
 #include <cstring>
@@ -12,61 +11,44 @@
 #include "imagens.h"
 #include "sons.h"
 
-using namespace std;
-
 extern volatile unsigned int game_speed,   // Controle de velocidade do jogo
-                             bg_speed,     // Controle de velocidade do fundo
-                             clock_speed;  // Controle de relogio
+    bg_speed,                              // Controle de velocidade do fundo
+    clock_speed;                           // Controle de relogio
 
-//
-//     Incrementa o contador de velocidade do jogo
-//
+/**
+ * Incrementa o contador de velocidade do jogo
+ */
 void incrementar_game_speed() {
     game_speed++;
 }
 END_OF_FUNCTION(incrementar_game_speed);
 
-
-//
-//     Decrementa o contador de velocidade do fundo
-//
+/**
+ * Decrementa o contador de velocidade do fundo
+ */
 void decrementar_bg_speed() {
     bg_speed = bg_speed ? (bg_speed - 1) : MAX_BG_SPEED;
 }
 END_OF_FUNCTION(decrementar_bg_speed);
 
-//
-//     Incrementa o contador de velocidade do relogio
-//
+/**
+ * Incrementa o contador de tempo do relogio
+ */
 void incrementar_clock_speed() {
     clock_speed++;
 }
 END_OF_FUNCTION(incrementar_clock_speed);
 
-
-//
-//     Retorna o clock de acordo com o SO
-//
-unsigned int wlclock() {
-    #ifndef WINDOWS
-        return clock() / 650;
-    #else
-        return clock();
-    #endif
-}
-
-
-//
-//     Retorna se jï¿½ passou n msegundos a partir de t
-//
+/**
+ * Retorna se ja passou n segundos a partir de t
+ */
 bool passou(unsigned int t, unsigned int n) {
     return (clock_speed > t + n);
 }
 
-
-//
-//     Converte o tempo de segundos para minutos e segundos
-//
+/**
+ * Converte o tempo de segundos para minutos e segundos
+ */
 char *converter_tempo(unsigned int intTempo, bool atualizar = true) {
     static char tempo[6];
 
@@ -74,27 +56,35 @@ char *converter_tempo(unsigned int intTempo, bool atualizar = true) {
         return tempo;
     }
 
-    int seg = clock_speed - intTempo;
-    int min = seg / 60;
-    seg %= 60;
+    int total_seg = clock_speed - intTempo;
 
-    sprintf(tempo, "%02d:%02d", min, seg);
+    if (total_seg < 0) {
+        total_seg = 0;
+    }
+
+    const int MAX_SEG = (99 * 60) + 59;
+    if (total_seg > MAX_SEG) {
+        total_seg = MAX_SEG;
+    }
+
+    int min = total_seg / 60;
+    int seg = total_seg % 60;
+
+    snprintf(tempo, sizeof(tempo), "%02d:%02d", min, seg);
 
     return tempo;
 }
 
-
-//
-//     Retorna um valor randomico entre 0 e 1000
-//
+/**
+ * Retorna um valor randomico entre 0 e 1000
+ */
 int wlrand() {
     return abs(rand() % 1000);
 }
 
-
-//
-//     Retorna o índice de uma imagem
-//
+/**
+ * Retorna o indice de uma imagem
+ */
 unsigned int get_imagem(const char *img) {
     if (img[0] == 'F') {
         switch (img[1]) {
@@ -171,10 +161,9 @@ unsigned int get_imagem(const char *img) {
     return 0;
 }
 
-
-//
-//     Retorna se uma imagem é parede ou chão
-//
+/**
+ * Retorna se uma imagem eh parede
+ */
 bool parede(const char *imagem) {
     return (imagem[0] == 'F')
         && (
@@ -186,18 +175,16 @@ bool parede(const char *imagem) {
         );
 }
 
-
-//
-//     Converte a coordenada X (pixels) para blocos
-//
+/**
+ * Converte a coordenada X (pixels) para blocos
+ */
 unsigned char XtoBlocoX(unsigned int X, const Fase fase) {
     return (X - fase.X) / TILE_SIZE;
 }
 
-
-//
-//     Converte a coordenada Y (pixels) para blocos
-//
+/**
+ * Converte a coordenada Y (pixels) para blocos
+ */
 unsigned char YtoBlocoY(unsigned int Y, const Fase fase) {
     return (Y - fase.Y) / TILE_SIZE;
 }

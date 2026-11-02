@@ -1,8 +1,7 @@
-//
-//  Construindo Palavras
-//  Descricao: Classe de controle do jogo.
-//  Versao: 1.2.0.0
-//
+/**
+ * Construindo Palavras
+ * Descricao: Classe de controle do jogo.
+ */
 #include <allegro.h>
 #include <cstring>
 #include <cstdio>
@@ -15,17 +14,22 @@
 using namespace std;
 
 volatile unsigned int game_speed = 0,   // Controle de velocidade do jogo
-                      bg_speed = 0,     // Controle de velocidade do fundo
-                      clock_speed = 0;  // Controle de relogio
+    bg_speed = 0,                       // Controle de velocidade do fundo
+    clock_speed = 0;                    // Controle de relogio
 
-//
-//     Construtor Padrão
-//
+/**
+ * Construtor Padrao
+ */
 Jogo::Jogo() {
     operacao         = -1;
     int erroPrograma = 0;
     int depth        = 0;
     bool comVideo    = false;
+
+    comSom           = false;
+    comUpscale       = false;
+    realWidth        = SCREEN_WIDTH;
+    realHeight       = SCREEN_HEIGHT;
     musicaAtual      = NULL;
 
     // Inicializando a Allegro, Teclado e Timer
@@ -56,55 +60,87 @@ Jogo::Jogo() {
         set_color_depth(16);
     }
 
-    // Tenta resolucao tela cheia
+    // Tenta resolucao tela cheia com upscale
     if (set_gfx_mode(GFX_AUTODETECT_FULLSCREEN,
-                     SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE, 0, 0) == 0) {
-        comVideo  = true;
-        tipoVideo = GFX_AUTODETECT_FULLSCREEN;
+        SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE, 0, 0) == 0
+    ) {
+        comVideo   = true;
+        tipoVideo  = GFX_AUTODETECT_FULLSCREEN;
+        comUpscale = true;
+        realWidth  = SCREEN_WIDTH_UPSCALE;
+        realHeight = SCREEN_HEIGHT_UPSCALE;
     }
 
-    // Tenta tela cheia no modo X
+    // Tenta resolucao tela cheia sem upscale
+    if (!comVideo) {
+        if (set_gfx_mode(GFX_AUTODETECT_FULLSCREEN,
+            SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0) == 0
+        ) {
+            comVideo  = true;
+            tipoVideo = GFX_AUTODETECT_FULLSCREEN;
+        }
+    }
+
+    // Tenta tela cheia no modo X com upscale e sem
     #ifdef GFX_XWINDOWS_FULLSCREEN
     if (!comVideo) {
         if (set_gfx_mode(GFX_XWINDOWS_FULLSCREEN,
-                         SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE, 0, 0) == 0) {
+            SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE, 0, 0) == 0
+        ) {
+            comVideo   = true;
+            tipoVideo  = GFX_XWINDOWS_FULLSCREEN;
+            comUpscale = true;
+            realWidth  = SCREEN_WIDTH_UPSCALE;
+            realHeight = SCREEN_HEIGHT_UPSCALE;
+        }
+        if (set_gfx_mode(GFX_XWINDOWS_FULLSCREEN,
+            SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0) == 0
+        ) {
             comVideo  = true;
             tipoVideo = GFX_XWINDOWS_FULLSCREEN;
         }
     }
     #endif
 
-    // Tenta modo VGA
+    // Tenta modo VGA com upscale e sem
     #ifdef GFX_VGA
     if (!comVideo) {
         if (set_gfx_mode(GFX_VGA, SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE, 0, 0) == 0) {
+            comVideo   = true;
+            tipoVideo  = GFX_VGA;
+            comUpscale = true;
+            realWidth  = SCREEN_WIDTH_UPSCALE;
+            realHeight = SCREEN_HEIGHT_UPSCALE;
+        }
+        if (set_gfx_mode(GFX_VGA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0) == 0) {
             comVideo  = true;
             tipoVideo = GFX_VGA;
         }
     }
     #endif
 
-    // Tenta modo janela
+    // Tenta modo janela (sem upscale)
     if (!comVideo) {
         if (set_gfx_mode(GFX_AUTODETECT_WINDOWED,
-                         SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE, 0, 0) == 0) {
+            SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0) == 0
+        ) {
             comVideo  = true;
             tipoVideo = GFX_AUTODETECT_WINDOWED;
         }
     }
 
-    // Tenta resolução segura (melhor que nada...)
+    // Tenta resolucao segura (sem upscale)
     if (!comVideo) {
-        if (set_gfx_mode(GFX_SAFE, SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE, 0, 0) == 0) {
+        if (set_gfx_mode(GFX_SAFE, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0) == 0) {
             comVideo  = true;
             tipoVideo = GFX_SAFE;
         }
     }
 
-    // Não deu...     :(
     if (!comVideo) {
         allegro_message("Erro ao definir modo grafico");
         erroPrograma = ERRO_VIDEO;
+        return;
     }
 
     // Definir som
@@ -146,11 +182,12 @@ Jogo::Jogo() {
     if (imgs == NULL) {
         allegro_message("Erro ao carregar o arquivo \"Imagens.dat\".");
         erroPrograma = ERRO_IMAGENS;
+        return;
     }
 
     // Carregando o arquivo de sons
     this->sons = load_datafile("dados/Sons.dat");
-    if ((sons == NULL) && (comSom)) {
+    if ((sons == NULL) && comSom) {
         volSample = 0;
         volMusica = 0;
         comSom    = false;
@@ -164,6 +201,7 @@ Jogo::Jogo() {
     if (!carregar_fases()) {
         allegro_message("Erro ao carregar o arquivo \"Fases.dat\".");
         erroPrograma = ERRO_FASES;
+        return;
     }
     carregar_habilitadas();
 
@@ -177,20 +215,18 @@ Jogo::Jogo() {
     zerou      = false;
 }
 
-
-//
-//    Aguarda 1ms ate que o game_speed volte a zerar
-//
+/**
+ * Aguarda 10ms ate que o game_speed volte a zerar
+ */
 void Jogo::aguardar() {
     while (game_speed == 0) {
-        rest(1);
+        rest(10);
     }
 }
 
-
-//
-//     Lê a fase do arquivo texto
-//
+/**
+ * Le a fase do arquivo texto
+ */
 bool Jogo::ler_fase(const char *arq, Fase &fase) {
     char aux[60];
     int largura, altura;
@@ -271,19 +307,18 @@ bool Jogo::ler_fase(const char *arq, Fase &fase) {
     return true;
 }
 
-
-//
-//     Lê os arquivos para montar os vetores de fases
-//
+/**
+ * Le os arquivos para montar os vetores de fases
+ */
 bool Jogo::carregar_fases() {
     bool lendoFase = true;
     Fase fase;
     char nivel = '0', nomeArquivo[14] = "Fases|n00.txt";
 
-    // Matriz 3 x N (3 níveis / N fases por nível)
+    // Matriz 3 x N (3 niveis / N fases por nivel)
     fases.resize(3);
 
-    // Carregando fases fáceis, médias e difíceis
+    // Carregando fases faceis, medias e dificeis
     for (int i = 1; i <= 3; i++) {
         fase.num   = 1;
         fase.nivel = i;
@@ -304,11 +339,11 @@ bool Jogo::carregar_fases() {
     return true;
 }
 
-
-//
-//     Lê arquivo tipado de fases habilitadas
-//
+/**
+ * Le arquivo tipado de fases habilitadas
+ */
 bool Jogo::carregar_habilitadas() {
+    //TODO obter de $HOME (por usuario)
     ifstream arquivoLeitura("dados/Fases.dat", ios::binary);
     if (arquivoLeitura.good()) {
         arquivoLeitura.read(reinterpret_cast<char *>(&habilitadas),
@@ -322,11 +357,11 @@ bool Jogo::carregar_habilitadas() {
     return false;
 }
 
-
-//
-//     Salva fases habilitadas em arquivo tipado
-//
+/**
+ * Salva fases habilitadas em arquivo tipado
+ */
 bool Jogo::salvar_habilitadas() {
+    //TODO salvar em $HOME (por usuario)
     ofstream arquivoEscrita("dados/Fases.dat", ios::binary);
     if (arquivoEscrita.good()) {
         arquivoEscrita.write(reinterpret_cast<char *>(&habilitadas),
@@ -337,48 +372,45 @@ bool Jogo::salvar_habilitadas() {
     return false;
 }
 
-
-//
-//     Ajusta a tela para tela cheia ou janela
-//
-void Jogo::alterna_tela() {
+/**
+ * Ajusta a tela para tela cheia ou janela
+ */
+void Jogo::alternar_tela() {
     if (is_windowed_mode()) {
-        set_gfx_mode(tipoVideo, SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE, 0, 0);
+        set_gfx_mode(tipoVideo, realWidth, realHeight, 0, 0);
     } else {
-        set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE, 0, 0);
+        set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
     }
 }
 
-
-//
-//     Retorna a operação a ser realizada
-//
+/**
+ * Retorna a operacao a ser realizada (situacao do jogo)
+ */
 int Jogo::get_operacao() {
     return operacao;
 }
 
-
-//
-//     Tocar uma musica a partir do numero
-//
+/**
+ * Tocar uma musica a partir do numero
+ */
 void Jogo::tocar_musica(int musica) {
     if (musicaTocando == musica) {
         return;
     }
     musicaTocando = musica;
 
-    // Interrompe a mÃºsica anterior se estiver tocando
+    // Interrompe a musica anterior se estiver tocando
     if (musicaAtual != NULL) {
         stop_sample(musicaAtual);
         destroy_sample(musicaAtual);
         musicaAtual = NULL;
     }
 
-    // Monta o caminho dinÃ¢mico do arquivo
+    // Monta o caminho dinamico do arquivo
     char caminho[64];
     sprintf(caminho, "dados/musicas/musica%d.wav", musica);
 
-    // Carrega o Ã¡udio
+    // Carrega o audio
     musicaAtual = load_sample(caminho);
     if (musicaAtual != NULL) {
         // play_sample(sample, volume, pan, pitch, loop)
@@ -387,10 +419,9 @@ void Jogo::tocar_musica(int musica) {
     }
 }
 
-
-//
-//     ApresentaÃ§Ã£o inicial (Refatorada)
-//
+/**
+ * Animacao da apresentacao inicial
+ */
 void Jogo::apresentacao() {
     clear_keybuf();
     int i = -144;
@@ -398,12 +429,12 @@ void Jogo::apresentacao() {
     while (i < 0) {
         desenhar_fundo_animado();
         blit((BITMAP *)imgs[Titulo].dat, buffer, 0, 0,
-             (SCREEN_WIDTH - 360) / 2, i, 360, 144);
+            (SCREEN_WIDTH - 360) / 2, i, 360, 144);
         desenhar_baloes(baloes);
         menu.desenhar(3 * i, -2 * i, imgs, buffer);
         masked_blit((BITMAP *)imgs[Creditos].dat, buffer, 0, 0,
-             (SCREEN_WIDTH - 179) - i,
-             (SCREEN_HEIGHT - 50) - (i / 2), 215, 50);
+            (SCREEN_WIDTH - 179) - i,
+            (SCREEN_HEIGHT - 50) - (i / 2), 215, 50);
 
         imprimir_tela();
 
@@ -414,26 +445,30 @@ void Jogo::apresentacao() {
 
             // Tratar Teclado
             if (keypressed()) {
-                tocar(MoveMenu);
                 switch (readkey() >> 8) {
                 case KEY_UP:
                 case KEY_W:
                     menu.subir();
+                    tocar(MoveMenu);
                     break;
 
                 case KEY_DOWN:
                 case KEY_S:
                     menu.descer();
+                    tocar(MoveMenu);
                     break;
 
                 case KEY_ENTER:
                     menu.selecionar();
+                    tocar(MoveMenu);
                     operacao = menu.get_opcao();
                     return;
-                    break;
 
                 case KEY_ESC:
                     return;
+
+                default:
+                    tocar(Erro);
                     break;
                 }
             }
@@ -445,9 +480,9 @@ void Jogo::apresentacao() {
 }
 
 
-//
-//     Imprime o menu enquanto nÃ£o seleciona uma opÃ§Ã£o
-//
+/**
+ * Imprime o menu enquanto nao seleciona uma opcao
+ */
 void Jogo::exibe_menu() {
     bool exibindoDica = false;
     const int velDica = 6;
@@ -459,8 +494,7 @@ void Jogo::exibe_menu() {
 
     // Enquanto nÃ£o selecionou uma opÃ§Ã£o
     while (!menu.definido()) {
-        tempoOcioso = clock_speed - inicioOcioso;
-        if (tempoOcioso >= OCIOSO) {
+        if (passou(inicioOcioso, OCIOSO)) {
             exibindoDica = true;
             if ((exibindoDica) && (x < 0)) {
                 x += velDica;
@@ -513,7 +547,7 @@ void Jogo::exibe_menu() {
                     break;
 
                 case KEY_F1:
-                    alterna_tela();
+                    alternar_tela();
                     break;
 
                 case KEY_F2:
@@ -526,7 +560,6 @@ void Jogo::exibe_menu() {
                     break;
                 }
             }
-            
             game_speed--;
         } // while game_speed
     } // while menu.definido
@@ -535,13 +568,13 @@ void Jogo::exibe_menu() {
 }
 
 
-//
-//     Mostra a apresentação da fase
-//
+/**
+ * Mostra a animacao de inicializacao da fase
+ */
 void Jogo::apresentacao_fase(Fase &fase) {
-    const int vel        = 3 * velPasso, // Velocidade de descida
-              atrasoGiro = 4,            // Atraso do giro
-              idica      = (TILE_SIZE + fase.personagemY) / 3;
+    const int vel  = 3 * velPasso, // Velocidade de descida
+        atrasoGiro = 4,            // Atraso do giro
+        idica      = (TILE_SIZE + fase.personagemY) / 3;
     int i = 0;
 
     personagem.acao          = PARADO;
@@ -561,7 +594,7 @@ void Jogo::apresentacao_fase(Fase &fase) {
         int topoX = (SCREEN_WIDTH - 620) / 2;
         masked_blit((BITMAP *)imgs[Topo].dat, buffer, 0, 0, topoX, 10, 620, 82);
 
-        // Imprimir Fase, Nível e Tempo
+        // Imprimir Fase, Nivel e Tempo
         textprintf_ex(buffer, font, topoX + 573, 34, makecol(255, 255, 0), 0, "%02d", fase.num);
         textprintf_ex(buffer, font, topoX + 573, 52, makecol(255, 255, 0), 0, "%d/3", fase.nivel);
         textout_ex(buffer, font, "00:00", topoX + 573, 71, makecol(255, 255, 0), 0);
@@ -587,6 +620,7 @@ void Jogo::apresentacao_fase(Fase &fase) {
             case 3: personagem.sentido = 'L'; break;
             }
 
+            // saltar para a posicao final (ignorar animacao)
             if (keypressed()) {
                 personagem.Y = fase.personagemY;
             }
@@ -596,38 +630,37 @@ void Jogo::apresentacao_fase(Fase &fase) {
 }
 
 
-//
-//     Inicia uma fase
-//
+/**
+ * Inicia uma fase
+ */
 void Jogo::iniciar() {
-
     bool acabou            = false;   // Terminou a fase
     bool sair              = false;   // Sair da fase sem ter terminado
-    bool comInstrucoes     = false;   // Exibindo instruções
+    bool comInstrucoes     = false;   // Exibindo instrucoes
     bool errou             = false;   // Errou a palavra
     bool tocouErro         = false;   // Tocou o som de erro quando errou
     unsigned int tempoJogo = 0;       // Tempo gasto na fase
 
-    // Se não é uma fase habilitada, voltar pra primeira habilitada
+    // Se nao eh uma fase habilitada, voltar pra primeira habilitada
     if (habilitadas.nivel[fase.nivel - 1] < fase.num) {
         fase.num = habilitadas.nivel[fase.nivel - 1];
     }
 
-    // Se zerou, mostra os créditos e depois o final
+    // Se zerou, mostra os creditos e depois o final
     if (!carregar_fase(fase, fases)) {
         zerou = true;
         operacao = CREDITOS;
         return;
     }
 
-    // Tocar a música do nível correspondente
+    // Tocar a musica do nivel correspondente
     switch (fase.nivel) {
     case 1: tocar_musica(MF); break;
     case 2: tocar_musica(MM); break;
     case 3: tocar_musica(MD); break;
     }
 
-    // Mostrar apresentação da fase
+    // Mostrar animacao de apresentacao da fase
     apresentacao_fase(fase);
 
     // Inicializar personagem na fase
@@ -643,7 +676,6 @@ void Jogo::iniciar() {
     tempoJogo      = clock_speed;
     inicioOcioso   = clock_speed;
     game_speed     = 0;
-    tempoOcioso    = 0;
     secreto        = 0;
     comInstrucoes  = false;
     errou          = false;
@@ -668,18 +700,18 @@ void Jogo::iniciar() {
             }
         }
 
-        // "F2: Instruções" no canto direito
-        if (tempoOcioso < OCIOSO || tempoOcioso % 2) {
+        // "F2: Instrucoes" no canto direito
+        if (!passou(inicioOcioso, OCIOSO) || clock_speed % 2) {
             masked_blit((BITMAP *)imgs[InstrucoesCanto].dat, buffer, 0, 0, 
-                 SCREEN_WIDTH - (106 + 10), SCREEN_HEIGHT - (14 + 10),
-                 106, 14);
+                SCREEN_WIDTH - (106 + 10), SCREEN_HEIGHT - (14 + 10),
+                106, 14);
         }
 
-        // Instruções
+        // Instrucoes
         if (comInstrucoes) {
             masked_blit((BITMAP *)imgs[Instrucoes].dat, buffer, 0, 0,
-                 (SCREEN_WIDTH - 339) / 2, (SCREEN_HEIGHT - 266) / 2,
-                 339, 266);
+                (SCREEN_WIDTH - 339) / 2, (SCREEN_HEIGHT - 266) / 2,
+                339, 266);
         }
 
         imprimir_tela();
@@ -687,41 +719,30 @@ void Jogo::iniciar() {
         aguardar();
 
         while (game_speed > 0) {
-            tempoOcioso = clock_speed - inicioOcioso;
 
-            // Se o personagem está parado
+            // Se o personagem esta parado
             if (personagem.acao != ANDANDO) {
-
                 personagem.passo = TILE_SIZE;
 
                 // posBloco indica a coordenada a frente do personagem
                 unsigned char posBlocoY = YtoBlocoY(personagem.Y, fase),
-                              posBlocoX = XtoBlocoX(personagem.X, fase);
+                    posBlocoX = XtoBlocoX(personagem.X, fase);
 
-                // Acima
-                if (personagem.sentido == 'U') {
-                    posBlocoY -= 1;
-
-                // Abaixo
-                } else if (personagem.sentido == 'D') {
-                    posBlocoY += 1;
-
-                // À esquerda
-                } else if (personagem.sentido == 'L') {
-                    posBlocoX -= 1;
-
-                // À direita
-                } else if (personagem.sentido == 'R') {
-                    posBlocoX += 1;
+                switch (personagem.sentido) {
+                case 'U': posBlocoY -= 1; break;
+                case 'D': posBlocoY += 1; break;
+                case 'L': posBlocoX -= 1; break;
+                case 'R': posBlocoX += 1; break;
                 }
 
                 if (keypressed()) {
+                    inicioOcioso = clock_speed;
+
                     switch (readkey() >> 8) {
 
                     // Subir
                     case KEY_UP:
                     case KEY_W:
-                        inicioOcioso = clock_speed;
                         if (passavel(posBlocoX, posBlocoY)) {
                             personagem.acao = ANDANDO;
                             if (personagem.sentido == 'U') {
@@ -736,7 +757,6 @@ void Jogo::iniciar() {
                     // Descer
                     case KEY_DOWN:
                     case KEY_S:
-                        inicioOcioso = clock_speed;
                         if (passavel(posBlocoX, posBlocoY)) {
                             personagem.acao = ANDANDO;
                             if (personagem.sentido == 'D') {
@@ -751,7 +771,6 @@ void Jogo::iniciar() {
                     // Esquerda
                     case KEY_LEFT:
                     case KEY_A:
-                        inicioOcioso = clock_speed;
                         if (passavel(posBlocoX, posBlocoY)) {
                             personagem.acao = ANDANDO;
                             if (personagem.sentido == 'L') {
@@ -766,7 +785,6 @@ void Jogo::iniciar() {
                     // Direita
                     case KEY_RIGHT:
                     case KEY_D:
-                        inicioOcioso = clock_speed;
                         if (passavel(posBlocoX, posBlocoY)) {
                             personagem.acao = ANDANDO;
                             if (personagem.sentido == 'R') {
@@ -780,16 +798,15 @@ void Jogo::iniciar() {
 
                     // Pegar / Soltar
                     case KEY_SPACE:
-                        inicioOcioso = clock_speed;
                         personagem.acao = PARADO;
 
-                        // Se a mala está cheia
+                        // Se a mala esta cheia
                         if (personagem.mala.conteudo) {
 
                             // Soltar objeto
                             if (passavel(posBlocoX, posBlocoY)) {
                                 acabou = deixar_objeto(posBlocoX, posBlocoY);
-                                     tocar(Toc);
+                                tocar(Toc);
                             } else {
                                 tocar(Erro);
                             }
@@ -800,7 +817,7 @@ void Jogo::iniciar() {
                                 tocouErro = false;
                             }
 
-                        // Se a mala está vazia
+                        // Se a mala esta vazia
                         } else {
                             char indice_objeto;
 
@@ -812,21 +829,20 @@ void Jogo::iniciar() {
                             } else {
                                 tocar(Erro);
                             }
-
                         }
                         break;
 
                     // Alterna entre janela e tela cheia
                     case KEY_F1:
-                        alterna_tela();
+                        alternar_tela();
                         break;
 
-                    // Mostra instruções
+                    // Mostra instrucoes
                     case KEY_F2:
                         comInstrucoes = !comInstrucoes;
                         break;
 
-                    // Apara as instruções ou volta pro menu inicial
+                    // Apara as instrucoes ou volta pro menu inicial
                     case KEY_ESC:
                         if (comInstrucoes) {
                             comInstrucoes = false;
@@ -836,13 +852,12 @@ void Jogo::iniciar() {
                         }
                         break;
 
-                    // Personagem faz "vitória"
+                    // Personagem faz "vitoria" (ester egg)
                     case KEY_V:
-                        inicioOcioso    = clock_speed;
                         personagem.acao = VITORIA;
                         break;
 
-                    // Código secreto: "ZERO" durante o jogo
+                    // Codigo secreto: "ZERO" durante o jogo
                     case KEY_Z:
                         secreto = 1;
                         break;
@@ -863,37 +878,40 @@ void Jogo::iniciar() {
 
                     clear_keybuf();
 
-                // Se não pressionou nenhuma tecla
+                // Se nao pressionou nenhuma tecla
                 } else {
 
                     // Se ficou muito tempo parado
-                    if (tempoOcioso > OCIOSO) {
+                    if (passou(inicioOcioso, OCIOSO)) {
                         personagem.acao = DORMINDO;
                     }
                 }
 
-            // Se o personagem não está parado
+            // Se o personagem nao esta parado
             } else {
                 clear_keybuf();
 
-                // Se não está em posição discreta, continuar andando
+                // Se nao esta em posicao discreta, continuar andando
                 if ((personagem.sentido == 'U') &&
-                    ((personagem.Y - fase.Y) % TILE_SIZE)) {
+                    ((personagem.Y - fase.Y) % TILE_SIZE)
+                ) {
                     personagem.Y     -= velPasso;
                     personagem.passo -= velPasso;
                 } else if ((personagem.sentido == 'L') &&
-                           ((personagem.X - fase.X) % TILE_SIZE)) {
+                    ((personagem.X - fase.X) % TILE_SIZE)
+                ) {
                     personagem.X     -= velPasso;
                     personagem.passo -= velPasso;
                 } else if ((personagem.sentido == 'R') &&
-                           ((personagem.X - fase.X) % TILE_SIZE)) {
+                    ((personagem.X - fase.X) % TILE_SIZE)
+                ) {
                     personagem.X     += velPasso;
                     personagem.passo -= velPasso;
                 } else if ((personagem.Y - fase.Y) % TILE_SIZE) {
                     personagem.Y     += velPasso;
                     personagem.passo -= velPasso;
 
-                // Se está em posição discreta, então parar
+                // Se esta em posicao discreta, entao parar
                 } else {
                     personagem.acao = PARADO;
                     inicioOcioso    = clock_speed;
@@ -904,7 +922,7 @@ void Jogo::iniciar() {
                 }
             }
 
-            // Se digitou o código secreto
+            // Se digitou o codigo secreto
             if (secreto == 4) {
                 tocar(Toc);
 
@@ -923,11 +941,11 @@ void Jogo::iniciar() {
     // Se terminou a fase
     if (acabou) {
 
-        // Habilitar a fase seguinte, caso não esteja habilitada
+        // Habilitar a fase seguinte, caso nao esteja habilitada
         if (habilitadas.nivel[fase.nivel - 1] < (fase.num + 1)) {
             habilitadas.nivel[fase.nivel - 1] = fase.num + 1;
         }
-        // Desenha Vitória
+        // Desenha Vitoria
         personagem.acao = VITORIA;
         int t = clock_speed;
         while (!passou(t, 2)) {
@@ -941,27 +959,25 @@ void Jogo::iniciar() {
             }
         }
 
-        // Parabéns
+        // Parabens
         bool exibindo = true;
         int cor       = 0;
         inicioOcioso  = clock_speed;
-        tempoOcioso   = 0;
         while (exibindo) {
-            tempoOcioso = clock_speed - inicioOcioso;
 
-            // Desenha Parabéns
+            // Desenha Parabens
             desenhar_fundo_animado();
             desenhar_topo(tempoJogo, false);
             masked_blit((BITMAP *)imgs[Parabens].dat, buffer, 0, 0,
-                 (SCREEN_WIDTH - 342) / 2, 200, 342, 151);
-            if ((tempoOcioso >= OCIOSO) && ((tempoOcioso / 500) % 2)) {
-                cor = makecol(255, 255, 0);
+                (SCREEN_WIDTH - 342) / 2, 200, 342, 151);
+            if (passou(inicioOcioso, OCIOSO) && (clock_speed % 2)) {
+                cor = makecol(255, 255, 0); // amarelo
             } else {
-                cor = makecol(255, 255, 255);
+                cor = makecol(255, 255, 255); // branco
             }
             textout_ex(buffer, font, "Aperte Enter para continuar",
-                 ((SCREEN_WIDTH - 342) / 2) + 70 , 
-                 200 + 125, cor, 0);
+                ((SCREEN_WIDTH - 342) / 2) + 70 ,
+                200 + 125, cor, 0);
             imprimir_tela();
 
             if (keypressed()) {
@@ -985,7 +1001,7 @@ void Jogo::iniciar() {
                     break;
 
                 case KEY_F1:
-                    alterna_tela();
+                    alternar_tela();
                     break;
                 }
             }
@@ -994,17 +1010,19 @@ void Jogo::iniciar() {
 }
 
 
-//
-//     Seleciona fases
-//
+/**
+ * Tela de selecao de fases
+ */
 void Jogo::mudar_fase() {
     bool selecionou = false;
     int faseinicio  = 0;
+    const char MAX_FASES_VISIVEIS = 17;
+
     operacao        = -1;
     game_speed      = 0;
     clear_keybuf();
 
-    faseinicio = (fase.num < 17) ? 0 : fase.num - 17;
+    faseinicio = (fase.num < MAX_FASES_VISIVEIS) ? 0 : fase.num - MAX_FASES_VISIVEIS;
 
     // Desenhar menu de fases
     while (!selecionou) {
@@ -1027,13 +1045,13 @@ void Jogo::mudar_fase() {
 
                 case KEY_ENTER:
 
-                    // Se é uma fase habilitada: iniciar fase
+                    // Se eh uma fase habilitada: iniciar fase
                     if (fase.num <= habilitadas.nivel[fase.nivel - 1]) {
                         tocar(MoveMenu);
                         selecionou = true;
                         operacao   = JOGAR;
 
-                    // Se não é uma fase habilitada: bloquear
+                    // Se nao eh uma fase habilitada: bloquear
                     } else {
                         tocar(Erro);
                     }
@@ -1072,7 +1090,7 @@ void Jogo::mudar_fase() {
                 case KEY_S:
                     if (fase.num < (int)fases[fase.nivel - 1].size()) {
                         tocar(MoveMenu);
-                        if (fase.num == faseinicio + 17) {
+                        if (fase.num == faseinicio + MAX_FASES_VISIVEIS) {
                             faseinicio += 1;
                         }
                         fase.num += 1;
@@ -1085,7 +1103,7 @@ void Jogo::mudar_fase() {
                     if (fase.num < (int)fases[fase.nivel - 1].size()) {
                         tocar(MoveMenu);
                         fase.num   = fases[fase.nivel - 1].size();
-                        faseinicio = (fase.num <= 17) ? 0 : fase.num % 17;
+                        faseinicio = (fase.num <= MAX_FASES_VISIVEIS) ? 0 : fase.num % MAX_FASES_VISIVEIS;
                     } else {
                         tocar(Erro);
                     }
@@ -1098,7 +1116,7 @@ void Jogo::mudar_fase() {
                         fase.nivel += 1;
                         if ((int)fases[fase.nivel - 1].size() < fase.num) {
                             fase.num = fases[fase.nivel - 1].size();
-                            faseinicio = (fase.num <= 17) ? 0 : fase.num % 17;
+                            faseinicio = (fase.num <= MAX_FASES_VISIVEIS) ? 0 : fase.num % MAX_FASES_VISIVEIS;
                         }
                     } else {
                         tocar(Erro);
@@ -1113,7 +1131,7 @@ void Jogo::mudar_fase() {
                         if ((int)fases[fase.nivel - 1].size() < fase.num) {
                             fase.num = fases[fase.nivel - 1].size();
                         }
-                        faseinicio = (fase.num <= 17) ? 0 : fase.num % 17;
+                        faseinicio = (fase.num <= MAX_FASES_VISIVEIS) ? 0 : fase.num % MAX_FASES_VISIVEIS;
                     } else {
                         tocar(Erro);
                     }
@@ -1127,16 +1145,16 @@ void Jogo::mudar_fase() {
 }
 
 
-//
-//     Exibe as instrucoes
-//
+/**
+ * Exibe as instrucoes
+ */
 void Jogo::instrucoes() {
     bool exibindo = true;
     operacao   = -1;
     game_speed = 0;
     clear_keybuf();
 
-    // Desenhar Instruções
+    // Desenhar Instrucoes
     while (exibindo) {
 
         // Desenhar
@@ -1144,7 +1162,7 @@ void Jogo::instrucoes() {
         desenhar_titulo();
         desenhar_baloes(baloes);
         masked_blit((BITMAP *)imgs[Instrucoes].dat, buffer, 0, 0,
-             (SCREEN_WIDTH - 339) / 2, 150, 339, 266);
+            (SCREEN_WIDTH - 339) / 2, 150, 339, 266);
         desenhar_creditos();
         imprimir_tela();
 
@@ -1161,7 +1179,7 @@ void Jogo::instrucoes() {
                     exibindo = false;
                     break;
                 case KEY_F1:
-                    alterna_tela();
+                    alternar_tela();
                     break;
                 }
             }
@@ -1171,25 +1189,25 @@ void Jogo::instrucoes() {
 }
 
 
-//
-//     Exibe os créditos
-//
+/**
+ * Exibe os creditos
+ */
 void Jogo::creditos() {
     operacao = -1;
 
     tocar_musica(MFinal);
     clear_keybuf();
 
-    // Passa os créditos
+    // Passa os creditos
     int auxy   = SCREEN_HEIGHT,
         i      = 0;
     game_speed = 0;
     while (i <= 716 + SCREEN_HEIGHT) {
 
-        // Desenhar Créditos
+        // Desenhar Creditos
         desenhar_fundo_animado();
         masked_blit((BITMAP *)imgs[Final].dat, buffer, 0, 0,
-             (SCREEN_WIDTH - 316) / 2, auxy, 316, 716);
+            (SCREEN_WIDTH - 316) / 2, auxy, 316, 716);
         imprimir_tela();
 
         aguardar();
@@ -1207,14 +1225,19 @@ void Jogo::creditos() {
                     i = 716 + SCREEN_HEIGHT;
                     break;
 
+                // Avancar os creditos
                 case KEY_DOWN:
                 case KEY_S:
                     i += 10;
                     break;
-                // Voltar os créditos
+
+                // Voltar os creditos
                 case KEY_UP:
                 case KEY_W:
                     i -= 15;
+                    if (i < 0) {
+                        i = 0;
+                    }
                     break;
                 }
 
@@ -1226,8 +1249,6 @@ void Jogo::creditos() {
     if (zerou) {
         final();
     }
-
-    apresentacao();
 }
 
 
@@ -1235,10 +1256,11 @@ void Jogo::creditos() {
 //     Exibe o final
 //
 void Jogo::final() {
+    const unsigned char TOTAL_BALOES = 15;
     fase.num   = 1;
     fase.nivel = 1;
 
-    // Mostra o Final
+    // Mostra o Final: personagem anda pra direita, aprarecendo o nome do jogo, depois ele faz sinal de vitoria
     personagem.acao    = ANDANDO;
     personagem.sentido = 'R';
     personagem.X       = -TILE_SIZE;
@@ -1250,10 +1272,10 @@ void Jogo::final() {
     game_speed = 0;
     while (!sair) {
 
-        // Criar balão em posição aleatória
-        if  (baloes.size() < 15) {
+        // Criar balao em posicao aleatoria
+        if  (baloes.size() < TOTAL_BALOES) {
             Objeto b;
-            b.blocoX = (SCREEN_WIDTH / 15) * baloes.size();
+            b.blocoX = (SCREEN_WIDTH / TOTAL_BALOES) * baloes.size();
             b.blocoY = (wlrand() % SCREEN_HEIGHT) + SCREEN_HEIGHT;
 
             if (baloes.size()) {
@@ -1270,7 +1292,8 @@ void Jogo::final() {
         // Desenhar
         desenhar_fundo_animado();
         masked_blit((BITMAP *)imgs[Fim].dat, buffer, 0, 0,
-             (SCREEN_WIDTH - 223) / 2, 200, 223, 98);
+            (SCREEN_WIDTH - 223) / 2, 200, 223, 98);
+
         desenhar_baloes(baloes);
 
         desenhar_letra_final((BITMAP *)imgs[LC].dat, buffer, 0, personagem.X, terminou);
@@ -1293,6 +1316,7 @@ void Jogo::final() {
         desenhar_letra_final((BITMAP *)imgs[LR].dat, buffer, 17, personagem.X, terminou);
         desenhar_letra_final((BITMAP *)imgs[LA].dat, buffer, 18, personagem.X, terminou);
         desenhar_letra_final((BITMAP *)imgs[LS].dat, buffer, 19, personagem.X, terminou);
+
         desenhar_personagem();
 
         imprimir_tela();
@@ -1301,6 +1325,7 @@ void Jogo::final() {
 
         // Tratar Teclado
         while (game_speed > 0) {
+
             // Exibir animacao
             if (!terminou) {
                 personagem.X += 2;
@@ -1327,12 +1352,12 @@ void Jogo::final() {
                         break;
 
                     case KEY_F1:
-                        alterna_tela();
+                        alternar_tela();
                         break;
                     }
                 }
 
-            // Personagem pode andar livremente
+            // Se terminou a animcacao, o personagem pode andar livremente
             } else {
                 if (keypressed()) {
                     switch (readkey() >> 8) {
@@ -1383,22 +1408,23 @@ void Jogo::final() {
 
                     // Alterna entre janela e tela cheia
                     case KEY_F1:
-                        alterna_tela();
+                        alternar_tela();
                         break;
 
                     // Volta pro menu inicial
+                    case KEY_ENTER:
                     case KEY_ESC:
                         sair = true;
                         break;
 
-                    // Personagem faz "vitória"
+                    // Personagem faz "vitoria"
                     case KEY_V:
                         personagem.acao = VITORIA;
                         break;
                     }
                     clear_keybuf();
 
-                    personagem.passo -= 2;
+                    personagem.passo -= 1;
                     if (personagem.passo <= 0) {
                         personagem.passo = TILE_SIZE;
                         tocar(Passo);
@@ -1416,16 +1442,16 @@ void Jogo::final() {
 }
 
 
-//
-//     Exibe o menu de opções
-//
+/**
+ * Exibe o menu de opcoes
+ */
 void Jogo::opcoes() {
     operacao   = -1;
     game_speed = 0;
     clear_keybuf();
     menuopcoes.iniciar();
 
-    // Desenhar menu de opções
+    // Desenhar menu de opcoes
     while (!menuopcoes.get_sair()) {
 
         // Desenhar
@@ -1481,7 +1507,7 @@ void Jogo::opcoes() {
                     break;
 
                 case KEY_F1:
-                    alterna_tela();
+                    alternar_tela();
                     break;
                 }
             }
@@ -1491,9 +1517,9 @@ void Jogo::opcoes() {
 }
 
 
-//
-//     Desenha nuvens no sentido noroeste/sudeste
-//
+/**
+ * Desenha nuvens no sentido noroeste/sudeste
+ */
 void Jogo::desenhar_fundo_animado() {
     BITMAP *imagem = (BITMAP *)imgs[Nuvens1].dat;
     if (operacao == JOGAR) {
@@ -1512,7 +1538,7 @@ void Jogo::desenhar_fundo_animado() {
     int srcX, srcY;
 
     const int half_width = (imagem->w / 2),
-              half_height = (imagem->h / 2);
+        half_height = (imagem->h / 2);
 
     srcX = bg_speed % half_width;
     srcY = bg_speed % half_height;
@@ -1520,48 +1546,47 @@ void Jogo::desenhar_fundo_animado() {
     for (int destX = 0; destX < SCREEN_WIDTH; destX += half_width) {
         for (int destY = 0; destY < SCREEN_HEIGHT; destY += half_height) {
             blit(imagem, buffer, srcX, srcY, destX, destY,
-                 half_width, half_height);
+                half_width, half_height);
         }
     }
 }
 
-
-//
-//     Desenha o título
-//
+/**
+ * Desenha o titulo do jogo no topo
+ */
 void Jogo::desenhar_titulo() {
     blit((BITMAP *)imgs[Titulo].dat, buffer, 0, 0,
-         (SCREEN_WIDTH - 360) / 2, 0, 360, 144);
+        (SCREEN_WIDTH - 360) / 2, 0, 360, 144);
 }
 
-
-//
-//     Desenha os créditos no canto
-//
+/**
+ * Desenha os creditos no canto inferior direito
+ */
 void Jogo::desenhar_creditos() {
     masked_blit((BITMAP *)imgs[Creditos].dat, buffer, 0, 0,
-                SCREEN_WIDTH - 179, SCREEN_HEIGHT - 50, 215, 50);
+        SCREEN_WIDTH - 179, SCREEN_HEIGHT - 50, 215, 50);
 }
 
-
-//
-//     Desenha a lista de fases de cada nível
-//
+/**
+ * Desenha a lista de fases de cada nivel
+ */
 void Jogo::desenhar_menufases(int &faseinicio) {
     static int cor = 0;
+    const char MAX_FASES_VISIVEIS = 17;
 
     // Desenha a tabela
     masked_blit((BITMAP *)imgs[Niveis].dat, buffer, 0, 0,
-         (SCREEN_WIDTH - 503) / 2, 150, 503, 264);
+        (SCREEN_WIDTH - 503) / 2, 150, 503, 264);
 
-    // Para cada nível
+    // Para cada nivel
     for (int i = 0; i < 3; i++) {
 
-        // Desenhar setas quando necessário
+        // Desenhar setas quando necessario
 
         // Seta para baixo
-        if ((faseinicio + 17 < (int)fases[fase.nivel - 1].size()) &&
-            (fase.nivel - 1 == i)) {
+        if ((faseinicio + MAX_FASES_VISIVEIS < (int)fases[fase.nivel - 1].size()) &&
+            (fase.nivel - 1 == i)
+        ) {
             masked_blit((BITMAP *)imgs[Desce].dat, buffer, 0, 0,
                 ((SCREEN_WIDTH - 503) / 2) + 130 + i * 165,
                 150 + 35 + 190, 24, 24);
@@ -1574,41 +1599,40 @@ void Jogo::desenhar_menufases(int &faseinicio) {
                 150 + 35, 24, 24);
         }
 
-        // Para cada Fase do Nível
-        for (int j = 0; j < (int)fases[i].size() && j < 17; j++) {
+        // Para cada Fase do Nivel
+        for (int j = 0; j < (int)fases[i].size() && j < MAX_FASES_VISIVEIS; j++) {
 
-            // Se é uma fase habilitada
+            // Se eh uma fase habilitada
             if (j + 1 + faseinicio <= habilitadas.nivel[i]) {
 
                 cor = ((j + 1 + faseinicio == fase.num) &&
-                      (i + 1 == fase.nivel)) ?
-                      makecol(0, 255, 0)     : // Fase selecionada: Verde claro
-                      makecol(255, 255, 255);  // Fase não selecionada: Branco
+                    (i + 1 == fase.nivel))
+                    ? makecol(0, 255, 0)       // Fase selecionada: Verde claro
+                    : makecol(255, 255, 255);  // Fase nao selecionada: Branco
 
-            // Se é uma fase desabilitada
+            // Se eh uma fase desabilitada
             } else {
 
                 // Fase selecionada
                 cor = ((j + 1 + faseinicio == fase.num) &&
-                      (i + 1 == fase.nivel)) ?
-                      makecol(0, 100, 0)     : // Fase selecionada: Verde escuro
-                      makecol(100, 100, 100);  // Fase não selecionada: Cinza
+                    (i + 1 == fase.nivel))
+                    ? makecol(0, 100, 0)       // Fase selecionada: Verde escuro
+                    : makecol(100, 100, 100);  // Fase nao selecionada: Cinza
             }
             int numfase = j + 1;
             numfase += (fase.nivel - 1 == i) ? faseinicio : 0;
 
-            // Imprime a fase do nível
-            textprintf_ex(buffer, font, 
-                 ((SCREEN_WIDTH - 503) / 2) + 60 + i * 165,
-                 150 + 35 + j * 13, cor, 0, "Fase %02d", numfase);
+            // Imprime a fase do nivel
+            textprintf_ex(buffer, font,
+                ((SCREEN_WIDTH - 503) / 2) + 60 + i * 165,
+                150 + 35 + j * 13, cor, 0, "Fase %02d", numfase);
         }
     }
 }
 
-
-//
-//     Desenha a fase
-//
+/**
+ * Desenha a fase
+ */
 void Jogo::desenhar_fase() {
     int tile, tile2, w2, h2;
 
@@ -1616,44 +1640,45 @@ void Jogo::desenhar_fase() {
     for (unsigned int w = 0; w < fase.piso.size(); w++) {
         for (unsigned int h = 0; h < fase.piso[0].size(); h++) {
             tile = fase.piso[w][h];
-            if (tile) {
-                w2 = -1;
-                h2 = -1;
-
-                // Se é um canto superior esquerdo arredondado
-                if (tile == F2) {
-                    w2 = w - 1;
-                    h2 = h - 1;
-
-                // Se é um canto superior direito arredondado
-                } else if (tile == F3) {
-                    w2 = w + 1;
-                    h2 = h - 1;
-
-                // Se é um canto inferior esquerdo arredondado
-                } else if (tile == F4) {
-                    w2 = w - 1;
-                    h2 = h + 1;
-
-                // Se é um canto inferior direito arredondado
-                } else if (tile == F5) {
-                    w2 = w + 1;
-                    h2 = h + 1;
-                }
-                if ((w2 >= 0) && (w2 < (int)fase.piso.size()) &&
-                    (h2 >= 0) && (h2 < (int)fase.piso[0].size())) {
-                    tile2 = fase.piso[w2][h2];
-                    if (tile2) {
-                        masked_blit((BITMAP *)imgs[tile2].dat, buffer, 0, 0, 
-                            fase.X + (w * TILE_SIZE), fase.Y + (h * TILE_SIZE),
-                            TILE_SIZE, TILE_SIZE);
-                    }
-                }
-                masked_blit((BITMAP *)imgs[tile].dat, buffer, 0, 0, 
-                     fase.X + (w * TILE_SIZE), fase.Y + (h * TILE_SIZE),
-                     TILE_SIZE, TILE_SIZE);
+            if (!tile) {
+                continue;
             }
+            w2 = -1;
+            h2 = -1;
 
+            // Se eh um canto superior esquerdo arredondado
+            if (tile == F2) {
+                w2 = w - 1;
+                h2 = h - 1;
+
+            // Se eh um canto superior direito arredondado
+            } else if (tile == F3) {
+                w2 = w + 1;
+                h2 = h - 1;
+
+            // Se eh um canto inferior esquerdo arredondado
+            } else if (tile == F4) {
+                w2 = w - 1;
+                h2 = h + 1;
+
+            // Se eh um canto inferior direito arredondado
+            } else if (tile == F5) {
+                w2 = w + 1;
+                h2 = h + 1;
+            }
+            if ((w2 >= 0) && (w2 < (int)fase.piso.size()) &&
+                (h2 >= 0) && (h2 < (int)fase.piso[0].size())
+            ) {
+                tile2 = fase.piso[w2][h2];
+                if (tile2) {
+                    masked_blit((BITMAP *)imgs[tile2].dat, buffer, 0, 0,
+                        fase.X + (w * TILE_SIZE), fase.Y + (h * TILE_SIZE),
+                        TILE_SIZE, TILE_SIZE);
+                }
+            }
+            masked_blit((BITMAP *)imgs[tile].dat, buffer, 0, 0,
+                fase.X + (w * TILE_SIZE), fase.Y + (h * TILE_SIZE),
+                TILE_SIZE, TILE_SIZE);
         }
     }
 
@@ -1661,36 +1686,38 @@ void Jogo::desenhar_fase() {
     int tam_palavra = (fase.destinos.size() - 1);
     for (int num_blocos = tam_palavra; num_blocos >= 0; num_blocos--) {
         masked_blit((BITMAP *)imgs[fase.destinos[num_blocos].imagem].dat,
-             buffer,
-             0, 0, fase.X + (fase.destinos[num_blocos].blocoX * TILE_SIZE),
-             fase.Y + (fase.destinos[num_blocos].blocoY * TILE_SIZE),
-             TILE_SIZE, TILE_SIZE);
+            buffer,
+            0, 0, fase.X + (fase.destinos[num_blocos].blocoX * TILE_SIZE),
+            fase.Y + (fase.destinos[num_blocos].blocoY * TILE_SIZE),
+            TILE_SIZE, TILE_SIZE);
     }
 
     // Colocando os objetos
     for (int num_obj = (fase.objetos.size() - 1); num_obj >= 0; num_obj--) {
        tile = fase.objetos[num_obj].imagem;
        if (tile) {
-           masked_blit((BITMAP *)imgs[tile].dat, buffer, 0, 0, 
-                fase.X + (fase.objetos[num_obj].blocoX * TILE_SIZE),
-                fase.Y + (fase.objetos[num_obj].blocoY * TILE_SIZE),
-                TILE_SIZE, TILE_SIZE);
+           masked_blit((BITMAP *)imgs[tile].dat, buffer, 0, 0,
+               fase.X + (fase.objetos[num_obj].blocoX * TILE_SIZE),
+               fase.Y + (fase.objetos[num_obj].blocoY * TILE_SIZE),
+               TILE_SIZE, TILE_SIZE);
         }
     }
 }
 
-
-//
-//     Desenho Topo
-//
+/**
+ * Desenho quadro de informacoes do topo da fase
+ */
 void Jogo::desenhar_topo(unsigned int tempo, bool atualizar) {
     int topoX = (SCREEN_WIDTH - 620) / 2;
+
+    // Fundo
     masked_blit((BITMAP *)imgs[Topo].dat, buffer, 0, 0, topoX, 10, 620, 82);
+
     if (personagem.mala.conteudo) {
         masked_blit((BITMAP *)imgs[personagem.mala.imagem].dat, buffer, 0, 0, topoX + 23, 51, TILE_SIZE, TILE_SIZE);
     }
 
-    // Imprimir Fase, Nível e Tempo
+    // Imprimir Fase, Nivel e Tempo
     textprintf_ex(buffer, font, topoX + 573, 34, makecol(255, 255, 0), 0, "%02d", fase.num);
     textprintf_ex(buffer, font, topoX + 573, 52, makecol(255, 255, 0), 0, "%d/3", fase.nivel);
     textout_ex(buffer, font, converter_tempo(tempo, atualizar), topoX + 573, 71, makecol(255, 255, 0), 0);
@@ -1701,10 +1728,9 @@ void Jogo::desenhar_topo(unsigned int tempo, bool atualizar) {
     }
 }
 
-
-//
-//     Desenha o personagem
-//
+/**
+ * Desenha o personagem
+ */
 void Jogo::desenhar_personagem() {
     char aux[5];
 
@@ -1716,7 +1742,7 @@ void Jogo::desenhar_personagem() {
     case ANDANDO:
         aux[1] = '1'; // Andando
 
-        if (((TILE_SIZE - 2)/ personagem.NUM_QUADROS) <= personagem.passo) {
+        if (((TILE_SIZE - 2) / personagem.NUM_QUADROS) <= personagem.passo) {
             aux[3] = '1'; // Tipo
         } else {
             aux[3] = '2'; // Tipo
@@ -1724,7 +1750,7 @@ void Jogo::desenhar_personagem() {
         break;
 
     case VITORIA:
-        aux[1] = '2'; // Vitória
+        aux[1] = '2'; // Vitoria
         aux[2] = 'D'; // Sentido
         aux[3] = '1'; // Tipo
         break;
@@ -1739,22 +1765,20 @@ void Jogo::desenhar_personagem() {
         break;
     }
 
-    masked_blit((BITMAP *)imgs[get_imagem(aux)].dat, buffer, 0, 0, personagem.X,
-         personagem.Y, TILE_SIZE, TILE_SIZE);
+    masked_blit((BITMAP *)imgs[get_imagem(aux)].dat, buffer, 0, 0,
+        personagem.X, personagem.Y, TILE_SIZE, TILE_SIZE);
 
     if (personagem.acao == DORMINDO) {
-        masked_blit((BITMAP *)imgs[ZZZ].dat, buffer, 0, 0, personagem.X + 20,
-         personagem.Y - 20, 98, 23);
+        masked_blit((BITMAP *)imgs[ZZZ].dat, buffer, 0, 0,
+            personagem.X + 20, personagem.Y - 20, 98, 23);
     }
 }
 
-
-//
-//     Desenha balões no final do jogo
-//
+/**
+ * Desenha baloes no final do jogo
+ */
 void Jogo::desenhar_baloes(vector<Objeto> &baloes) {
     for (int i = 0; i < (int)baloes.size(); i++) {
-
         baloes[i].blocoY -= baloes[i].conteudo;
         if ((baloes[i].blocoY + 219) <= 0) {
             baloes[i].blocoX = wlrand() % SCREEN_WIDTH;
@@ -1763,59 +1787,58 @@ void Jogo::desenhar_baloes(vector<Objeto> &baloes) {
         }
 
         switch (baloes[i].imagem) {
-            case 1:
-                masked_blit((BITMAP *)imgs[Balao1].dat, buffer, 0, 0,
-                     baloes[i].blocoX, baloes[i].blocoY , 100, 219);
-                break;
-            case 2:
-                masked_blit((BITMAP *)imgs[Balao2].dat, buffer, 0, 0,
-                     baloes[i].blocoX, baloes[i].blocoY , 100, 219);
-                break;
-            default:
-                masked_blit((BITMAP *)imgs[Balao3].dat, buffer, 0, 0,
-                     baloes[i].blocoX, baloes[i].blocoY , 100, 219);
-                break;
+        case 1:
+            masked_blit((BITMAP *)imgs[Balao1].dat, buffer, 0, 0,
+                baloes[i].blocoX, baloes[i].blocoY , 100, 219);
+            break;
+        case 2:
+            masked_blit((BITMAP *)imgs[Balao2].dat, buffer, 0, 0,
+                baloes[i].blocoX, baloes[i].blocoY , 100, 219);
+            break;
+        default:
+            masked_blit((BITMAP *)imgs[Balao3].dat, buffer, 0, 0,
+                baloes[i].blocoX, baloes[i].blocoY , 100, 219);
+            break;
         }
     }
 }
 
-
-//
-//     Imprime uma letra durante a exibiï¿½ï¿½o do final do jogo
-//
+/**
+ * Imprime uma letra durante a exibicao do final do jogo
+ */
 void Jogo::desenhar_letra_final(BITMAP *letra, BITMAP *buffer, int pos, int i, bool terminou) {
     if (terminou || i > ((SCREEN_WIDTH - 20 * TILE_SIZE) / 2) + (pos * TILE_SIZE)) {
         masked_blit(letra, buffer, 0, 0, ((SCREEN_WIDTH - 20 * TILE_SIZE) / 2) + (pos * TILE_SIZE),
-             400, TILE_SIZE, TILE_SIZE);
+            400, TILE_SIZE, TILE_SIZE);
     }
 }
 
-
-//
-//    Imprime a tela com base no conteudo do buffer
-//
+/**
+ * Imprime a tela com base no conteudo do buffer
+ */
 void Jogo::imprimir_tela() {
-    //blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    stretch_blit(buffer, screen,
-             0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
-             0, 0, SCREEN_WIDTH_UPSCALE, SCREEN_HEIGHT_UPSCALE);
+    if (is_windowed_mode()) {
+        blit(buffer, screen, 0, 0, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    } else {
+        stretch_blit(buffer, screen,
+            0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
+            0, 0, realWidth, realHeight);
+    }
 }
 
-
-//
-//     Carrega fase ou retorna FALSE
-//
+/**
+ * Carrega fase ou retorna FALSE
+ */
 bool Jogo::carregar_fase(Fase &fase, const vector< vector<Fase> > fases) {
 
-    // Se não existe, passar para o próximo nível
+    // Se nao existe, passar para o proximo nivel
     if (fases[fase.nivel - 1].size() < (unsigned int)fase.num) {
 
-        // Se é o último nível, então acabaram as fases
+        // Se eh o ultimo nivel, entao acabaram as fases
         if (fase.nivel == 3) {
             return false;
 
-        // Se não é o último nível
+        // Se nao eh o ultimo nivel
         } else {
             fase.num = 1;
             fase.nivel++;
@@ -1830,22 +1853,20 @@ bool Jogo::carregar_fase(Fase &fase, const vector< vector<Fase> > fases) {
 }
 
 
-//
-//     Toca um som Wave
-//
+/**
+ * Toca um som Wave do arquivo dat
+ */
 void Jogo::tocar(int som) {
     play_sample((SAMPLE *)sons[som].dat, 255, 127, 1000, 0);
 }
 
-
-//
-//     Verifica se os campos verdes foram preenchidos incorretamente
-//     FALSE: não foram todos preenchidos ou foram preenchidos corretamente
-//     TRUE: Todos foram preenchidos, mas incorretamente
-//
+/**
+ * Verifica se os campos verdes foram preenchidos incorretamente
+ * FALSE: nao foram todos preenchidos ou foram preenchidos corretamente
+ * TRUE: Todos foram preenchidos, mas incorretamente
+ */
 bool Jogo::verificar_erros() {
-    bool retorno = false,
-         preenchido = false;
+    bool preenchido = false;
 
     // Para cada campo verde
     for (int i = (fase.destinos.size() - 1); i >= 0; i--) {
@@ -1854,14 +1875,15 @@ bool Jogo::verificar_erros() {
         preenchido = false;
         for (int j = (fase.objetos.size() - 1); j >= 0; j--) {
 
-            // Se a letra está no campo
+            // Se a letra esta no campo verde
             if ((fase.objetos[j].blocoX == fase.destinos[i].blocoX) &&
-                (fase.objetos[j].blocoY == fase.destinos[i].blocoY)) {
+                (fase.objetos[j].blocoY == fase.destinos[i].blocoY)
+            ) {
                 preenchido = true;
 
-                // Se a letra está errada
+                // Se a letra esta errada
                 if (fase.objetos[j].conteudo != fase.destinos[i].conteudo) {
-                    retorno = true;
+                    return true;
                 }
                 break;
             }
@@ -1870,37 +1892,36 @@ bool Jogo::verificar_erros() {
             return false;
         }
     }
-    return retorno;
+    return false;
 }
 
-
-//
-//     Verifica se existe um objeto na posição indicada
-//
+/**
+ * Verifica se existe um objeto na posicao indicada
+ * e retorna o indice do objeto encontrado ou -1 se nao encontrar
+ */
 int Jogo::tem_objeto(unsigned char blocoX, unsigned char blocoY) {
     for (int j = fase.objetos.size() - 1; j >= 0; j--) {
-        if ((fase.objetos[j].blocoX == blocoX) && 
-            (fase.objetos[j].blocoY == blocoY)) {
+        if ((fase.objetos[j].blocoX == blocoX) &&
+            (fase.objetos[j].blocoY == blocoY)
+        ) {
             return j;
         }
     }
     return -1;
 }
 
-
-//
-//     Pega um objeto da fase
-//
+/**
+ * Pega um objeto da fase
+ */
 void Jogo::pegar_objeto(unsigned char indice_objeto) {
     personagem.mala = fase.objetos[indice_objeto];
     fase.objetos.erase(fase.objetos.begin() + indice_objeto);
 }
 
-
-//
-//     Larga o objeto da mala na coordenada indicada
-//     Retorna se acabou a fase ou não
-//
+/**
+ * Larga o objeto da mala na coordenada indicada
+ * Retorna se acabou a fase ou nao
+ */
 bool Jogo::deixar_objeto(unsigned char blocoX, unsigned char blocoY) {
     bool podeContinuar;
 
@@ -1914,9 +1935,10 @@ bool Jogo::deixar_objeto(unsigned char blocoX, unsigned char blocoY) {
         podeContinuar = false;
         for (int j = fase.objetos.size() - 1; j >= 0; j--) {
             if ((fase.destinos[i].blocoX == fase.objetos[j].blocoX) &&
-                (fase.destinos[i].blocoY == fase.objetos[j].blocoY)) {
+                (fase.destinos[i].blocoY == fase.objetos[j].blocoY)
+            ) {
 
-                // Se o conteúdo do bloco está errado
+                // Se o conteudo do bloco esta errado
                 if (fase.destinos[i].conteudo != fase.objetos[j].conteudo) {
                     return false;
                 } else {
@@ -1928,7 +1950,7 @@ bool Jogo::deixar_objeto(unsigned char blocoX, unsigned char blocoY) {
             }
         }
 
-        // Se não há objetos neste bloco
+        // Se nao ha objetos neste bloco
         if (!podeContinuar) {
             return false;
         }
@@ -1936,13 +1958,13 @@ bool Jogo::deixar_objeto(unsigned char blocoX, unsigned char blocoY) {
     return true;
 }
 
-
-//
-//     Retorna se uma posição da fase é passável ou não
-//
+/**
+ * Retorna se uma posicao da fase eh passavel ou nao
+ */
 bool Jogo:: passavel(int blocoX, int blocoY) {
     if ((blocoX >= 0) && (blocoX < (int)fase.piso.size()) &&
-        (blocoY >= 0) && (blocoY < (int)fase.piso[0].size())) {
+        (blocoY >= 0) && (blocoY < (int)fase.piso[0].size())
+    ) {
         if (!fase.passavel[blocoX][blocoY]) {
             return false;
         }
@@ -1952,7 +1974,8 @@ bool Jogo:: passavel(int blocoX, int blocoY) {
 
     for (int i = fase.objetos.size() - 1; i >= 0; i--) {
         if ((fase.objetos[i].blocoX == blocoX) &&
-            (fase.objetos[i].blocoY == blocoY)) {
+            (fase.objetos[i].blocoY == blocoY)
+        ) {
             return false;
         }
     }
@@ -1960,10 +1983,9 @@ bool Jogo:: passavel(int blocoX, int blocoY) {
     return true;
 }
 
-
-//
-//     Encerra as funcionalidades da Allegro
-//
+/**
+ * Encerra as funcionalidades da Allegro
+ */
 void Jogo::sair() {
     clear_keybuf();
     if (musicaAtual != NULL) {

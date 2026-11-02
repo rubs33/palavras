@@ -1,8 +1,3 @@
-//
-//  Construindo Palavras
-//  Descricao: Classe de controle do Menu Principal.
-//  Versao: 1.2.0.0
-//
 #ifndef MENU_H
 #define MENU_H
 
@@ -20,17 +15,17 @@ class Menu {
     void subir();
     void descer();
     void desenhar(int x, int y, DATAFILE *imgs, BITMAP *buffer);
-    
+
     private:
     unsigned char opcao;
-    int cx, cy;                          // Coordenada do cursor
-    bool escolheu;                       // Selecionou uma opção
-    
-    static const int MENU_Y       = 180, // Posição Y do Menu
-                     MENU_WIDTH   = 190, // Largura do Menu
-                     MENU_HEIGHT  = 193, // Altura do Menu
-                     MENU_UNIDADE =  28, // Distancia entre os itens do Menu
-                     NUM_OPCOES   =   6; // Número de opções do Menu Principal
+    int cx, cy;                    // Coordenada do cursor
+    bool escolheu;                 // Selecionou uma opcao
+
+    static const int MENU_Y = 180, // Posicao Y do Menu
+        MENU_WIDTH          = 190, // Largura do Menu
+        MENU_HEIGHT         = 193, // Altura do Menu
+        MENU_UNIDADE        =  28, // Distancia entre os itens do Menu
+        NUM_OPCOES          =   6; // Numero de opcoes do Menu Principal
 };
 
 #endif

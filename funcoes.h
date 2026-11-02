@@ -1,8 +1,3 @@
-//
-//  Construindo Palavras
-//  Descricao: Funcoes gerais.
-//  Versao: 1.2.0.0
-//
 #ifndef FUNCOES_H
 #define FUNCOES_H
 
@@ -12,7 +7,6 @@
 void incrementar_game_speed();
 void decrementar_bg_speed();
 void incrementar_clock_speed();
-unsigned int wlclock();
 bool passou(unsigned int t, unsigned int n);
 char *converter_tempo(int intTempo, bool atualizar);
 int wlrand();
