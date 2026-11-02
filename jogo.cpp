@@ -1928,7 +1928,8 @@ void Jogo::tocar(int som) {
  * TRUE: Todos foram preenchidos, mas incorretamente
  */
 bool Jogo::verificar_erros() {
-    bool preenchido = false;
+    bool retorno = false,
+         preenchido = false;
 
     // Para cada campo verde
     for (int i = (fase.destinos.size() - 1); i >= 0; i--) {
@@ -1939,13 +1940,12 @@ bool Jogo::verificar_erros() {
 
             // Se a letra esta no campo verde
             if ((fase.objetos[j].blocoX == fase.destinos[i].blocoX) &&
-                (fase.objetos[j].blocoY == fase.destinos[i].blocoY)
-            ) {
+                (fase.objetos[j].blocoY == fase.destinos[i].blocoY)) {
                 preenchido = true;
 
                 // Se a letra esta errada
                 if (fase.objetos[j].conteudo != fase.destinos[i].conteudo) {
-                    return true;
+                    retorno = true;
                 }
                 break;
             }
@@ -1954,7 +1954,7 @@ bool Jogo::verificar_erros() {
             return false;
         }
     }
-    return false;
+    return retorno;
 }
 
 /**
