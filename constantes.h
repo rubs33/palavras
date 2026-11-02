@@ -20,7 +20,7 @@ static const char BARRA = '/';
 #endif
 
 // Retorno do Programa
-enum {OK, ERRO_VIDEO, ERRO_IMAGENS, ERRO_FASES};
+enum {OK, ERRO_CHAMADA, ERRO_VIDEO, ERRO_IMAGENS, ERRO_FASES};
 
 // Opcoes do menu principal
 enum {JOGAR, MUDAR_FASE, INSTRUCOES, CREDITOS, OPCOES, SAIR};

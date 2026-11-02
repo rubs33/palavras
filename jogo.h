@@ -2,15 +2,17 @@
 #define JOGO_H
 
 #include <allegro.h>
+#include <filesystem>
 #include <vector>
 #include "tipos.h"
 #include "menu.h"
 #include "menuopcoes.h"
 
 class Jogo {
-    public:
+public:
     Jogo();
-    ~Jogo() {}
+    ~Jogo();
+    int carregar_recursos(std::filesystem::path caminhoBase);
     int get_operacao();
     void tocar_musica(int musica);
     void apresentacao();
@@ -22,9 +24,9 @@ class Jogo {
     void creditos();
     void final();
     void opcoes();
-    void sair();
+    void encerrar();
 
-    private:
+private:
     Menu menu;                            // Menu Principal
     Menuopcoes menuopcoes;                // Menu de Opcoes
     Personagem personagem;                // Personagem Principal
@@ -50,8 +52,8 @@ class Jogo {
     int operacao;                         // Status do jogo
 
     void aguardar();
-    bool ler_fase(const char *arq, Fase &fase);
-    bool carregar_fases();
+    bool ler_fase(std::filesystem::path caminho, Fase &fase);
+    bool carregar_fases(std::filesystem::path caminhoBase);
     bool carregar_habilitadas();
     bool salvar_habilitadas();
     void alternar_tela();

@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include "jogo.h"
 #include "tipos.h"
@@ -26,17 +27,30 @@ volatile unsigned int game_speed = 0,   // Controle de velocidade do jogo
  */
 Jogo::Jogo() {
     operacao         = -1;
-    int erroPrograma = 0;
-    int depth        = 0;
-    bool comVideo    = false;
-
     comSom           = false;
     comUpscale       = false;
     realWidth        = SCREEN_WIDTH;
     realHeight       = SCREEN_HEIGHT;
     musicaAtual      = NULL;
+}
+
+/**
+ * Encerra o jogo
+ */
+Jogo::~Jogo() {
+    encerrar();
+}
+
+/**
+ * Carrega recursos para o jogo e retorna um exit status
+ */
+int Jogo::carregar_recursos(fs::path caminhoBase) {
+    int depth        = 0;
+    bool comVideo    = false;
+    fs::path caminho_absoluto;
 
     // Inicializando a Allegro, Teclado e Timer
+    std::cout << "[LOG] Iniciando recursos Allegro" << std::endl;
     set_uformat(U_ASCII);
     allegro_init();
     install_keyboard();
@@ -63,6 +77,8 @@ Jogo::Jogo() {
     } else {
         set_color_depth(16);
     }
+
+    std::cout << "[LOG] Iniciando modo grafico" << std::endl;
 
     // Tenta resolucao tela cheia com upscale
     if (set_gfx_mode(GFX_AUTODETECT_FULLSCREEN,
@@ -143,9 +159,10 @@ Jogo::Jogo() {
 
     if (!comVideo) {
         allegro_message("Erro ao definir modo grafico");
-        erroPrograma = ERRO_VIDEO;
-        return;
+        return static_cast<int>(ERRO_VIDEO);
     }
+
+    std::cout << "[LOG] Iniciando som" << std::endl;
 
     // Definir som
     int tipoSample = DIGI_AUTODETECT;
@@ -182,15 +199,20 @@ Jogo::Jogo() {
     comSom = (install_sound(tipoSample, MIDI_NONE, 0) == 0);
 
     // Carregando o arquivo de imagens
-    this->imgs = load_datafile("dados/Imagens.dat");
+    caminho_absoluto = caminhoBase / "dados" / "Imagens.dat";
+    std::cout << "[LOG] Carregando arquivo de imagens em: " << caminho_absoluto << std::endl;
+
+    this->imgs = load_datafile(caminho_absoluto.string().c_str());
     if (imgs == NULL) {
         allegro_message("Erro ao carregar o arquivo \"Imagens.dat\".");
-        erroPrograma = ERRO_IMAGENS;
-        return;
+        return static_cast<int>(ERRO_IMAGENS);
     }
 
     // Carregando o arquivo de sons
-    this->sons = load_datafile("dados/Sons.dat");
+    caminho_absoluto = caminhoBase / "dados" / "Sons.dat";
+    std::cout << "[LOG] Carregando arquivo de sons em: " << caminho_absoluto << std::endl;
+
+    this->sons = load_datafile(caminho_absoluto.string().c_str());
     if ((sons == NULL) && comSom) {
         volSample = 0;
         volMusica = 0;
@@ -202,14 +224,17 @@ Jogo::Jogo() {
     set_volume(volSample, volMusica);
 
     // Carregando o arquivo de fases
-    if (!carregar_fases()) {
-        allegro_message("Erro ao carregar o arquivo \"Fases.dat\".");
-        erroPrograma = ERRO_FASES;
-        return;
+    std::cout << "[LOG] Carregando arquivos de fases" << std::endl;
+    if (!carregar_fases(caminhoBase)) {
+        allegro_message("Erro ao carregar as fases.");
+        return static_cast<int>(ERRO_FASES);
     }
+
+    std::cout << "[LOG] Carregando fases habilitadas" << std::endl;
     carregar_habilitadas();
 
     // Criando um buffer para guardar as imagens a serem exibidas na tela
+    std::cout << "[LOG] Iniciando buffer de renderizacao" << std::endl;
     this->buffer = create_bitmap(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Inicializa o jogo
@@ -217,6 +242,9 @@ Jogo::Jogo() {
     fase.nivel = 1;
     velPasso   = 1;
     zerou      = false;
+
+    std::cout << "[LOG] Tudo pronto para iniciar o jogo" << std::endl;
+    return static_cast<int>(OK);
 }
 
 /**
@@ -231,10 +259,18 @@ void Jogo::aguardar() {
 /**
  * Le a fase do arquivo texto
  */
-bool Jogo::ler_fase(const char *arq, Fase &fase) {
+bool Jogo::ler_fase(const fs::path caminho, Fase &fase) {
     char aux[60];
     int largura, altura;
-    ifstream arquivo_texto(arq);
+
+    std::cout << "[LOG] Verificando arquivo de fase em: " << caminho << std::endl;
+
+    if (!fs::exists(caminho) || !fs::is_regular_file(caminho)) {
+        std::cerr << "[ERRO] Arquivo de fase nao encontrado ou invalido: " << caminho << std::endl;
+        return false;
+    }
+
+    ifstream arquivo_texto(caminho.string().c_str());
 
     if (!arquivo_texto) {
         return false;
@@ -314,10 +350,11 @@ bool Jogo::ler_fase(const char *arq, Fase &fase) {
 /**
  * Le os arquivos para montar os vetores de fases
  */
-bool Jogo::carregar_fases() {
+bool Jogo::carregar_fases(fs::path caminhoBase) {
     bool lendoFase = true;
     Fase fase;
-    char nivel = '0', nomeArquivo[14] = "Fases|n00.txt";
+    char nivel = '0', nomeArquivo[14] = "Fases/x00.txt";
+    fs::path caminho_absoluto;
 
     // Matriz 3 x N (3 niveis / N fases por nivel)
     fases.resize(3);
@@ -332,8 +369,11 @@ bool Jogo::carregar_fases() {
             case 3: nivel = 'd'; break;
         }
         do {
-            sprintf(nomeArquivo, "Fases%c%c%02d.txt", BARRA, nivel, fase.num);
-            if (lendoFase = ler_fase(nomeArquivo, fase)) {
+            sprintf(nomeArquivo, "%c%02d.txt", nivel, fase.num);
+            caminho_absoluto = caminhoBase / "Fases" / nomeArquivo;
+            std::cout << "[LOG] Tentando carregar arquivo de fase em: " << caminho_absoluto << std::endl;
+
+            if (lendoFase = ler_fase(caminho_absoluto, fase)) {
                 fases[fase.nivel - 1].push_back(fase);
                 fase.num += 1;
             }
@@ -2008,18 +2048,34 @@ bool Jogo:: passavel(int blocoX, int blocoY) {
 /**
  * Encerra as funcionalidades da Allegro
  */
-void Jogo::sair() {
+void Jogo::encerrar() {
+    std::cout << "[LOG] Encerrando recursos" << std::endl;
     clear_keybuf();
     if (musicaAtual != NULL) {
+        std::cout << "[LOG] Encerrando musica" << std::endl;
         stop_sample(musicaAtual);
         destroy_sample(musicaAtual);
         musicaAtual = NULL;
     }
+
+    std::cout << "[LOG] Encerrando midi" << std::endl;
     stop_midi();
+
+    std::cout << "[LOG] Encerrando graficos" << std::endl;
     set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+
+    std::cout << "[LOG] Salvando fases habilitadas" << std::endl;
     salvar_habilitadas();
+
+    std::cout << "[LOG] Liberando imagens" << std::endl;
     unload_datafile(imgs);
+
+    std::cout << "[LOG] Liberando sons" << std::endl;
     unload_datafile(sons);
+
+    std::cout << "[LOG] Liberando buffer" << std::endl;
     destroy_bitmap(buffer);
+
+    std::cout << "[LOG] Encerrando allegro" << std::endl;
     allegro_exit();
 }
